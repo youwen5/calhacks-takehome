@@ -1,0 +1,251 @@
+@import 'tailwindcss';
+@theme {
+  --font-sans: 'Inter', 'Avenir Next', 'Segoe UI', sans-serif;
+}
+:root {
+  font-family: var(--font-sans);
+  color: #1c302b;
+  background: #f6f7f2;
+  font-synthesis: none;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+a {
+  color: inherit;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button,
+.button {
+  cursor: pointer;
+  border: 0;
+  border-radius: 9px;
+  padding: 0.75rem 1.1rem;
+  font-weight: 650;
+  background: #174e3c;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+button:hover,
+.button:hover {
+  background: #24654e;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+button.secondary,
+.button.secondary {
+  background: #edf0e8;
+  color: #234d3d;
+  border: 1px solid #d5dece;
+}
+button.danger {
+  background: #963a35;
+}
+:focus-visible {
+  outline: 3px solid #ab872a;
+  outline-offset: 3px;
+}
+input:not([type='checkbox']),
+select,
+textarea {
+  display: block;
+  width: 100%;
+  border: 1px solid #cbd5cd;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-top: 0.4rem;
+  color: #18372a;
+  background: white;
+}
+textarea {
+  min-height: 130px;
+  resize: vertical;
+  line-height: 1.6;
+}
+label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 1.1rem 0;
+}
+input[type='checkbox'] {
+  accent-color: #174e3c;
+  width: 17px;
+  height: 17px;
+}
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: -0.055em;
+  line-height: 1.1;
+  font-weight: 650;
+}
+h2 {
+  font-size: 1.3rem;
+  letter-spacing: -0.03em;
+  font-weight: 650;
+}
+h3 {
+  font-size: 1rem;
+  font-weight: 650;
+}
+p {
+  line-height: 1.7;
+}
+.muted,
+small {
+  color: #62746a;
+}
+small,
+.hint {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 400;
+  margin-top: 0.35rem;
+  line-height: 1.5;
+}
+.eyebrow {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-weight: 700;
+  color: #67806f;
+  margin-bottom: 1rem;
+}
+.panel {
+  border: 1px solid #dce2d8;
+  background: white;
+  border-radius: 14px;
+  padding: 1.6rem;
+}
+.stack {
+  display: grid;
+  gap: 1.5rem;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
+  gap: 1.4rem;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.spread {
+  justify-content: space-between;
+}
+.badge {
+  display: inline-block;
+  border-radius: 6px;
+  padding: 0.3rem 0.65rem;
+  background: #edf1e9;
+  color: #3b5a46;
+  font-size: 0.75rem;
+  font-weight: 650;
+  text-transform: capitalize;
+}
+.badge.accepted,
+.badge.published {
+  background: #d9eedb;
+  color: #185834;
+}
+.badge.waitlisted {
+  background: #fff0c8;
+  color: #765d19;
+}
+.badge.rejected {
+  background: #f7e1dd;
+  color: #883d35;
+}
+.notice {
+  padding: 1rem 1.2rem;
+  border: 1px solid #d6dfca;
+  border-radius: 10px;
+  background: #edf3e5;
+  line-height: 1.6;
+  margin-bottom: 1.2rem;
+}
+.notice.error {
+  border-color: #e8bbb5;
+  background: #fff0ed;
+  color: #842f27;
+}
+.page-head {
+  margin-bottom: 2rem;
+}
+.page-head p {
+  max-width: 660px;
+}
+.table-wrap {
+  overflow: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.88rem;
+}
+th {
+  font-size: 0.7rem;
+  color: #63746b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+th,
+td {
+  padding: 1rem 0.75rem;
+  border-bottom: 1px solid #e6ebe2;
+  vertical-align: top;
+}
+td a {
+  font-weight: 650;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.prose {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+.skip {
+  position: fixed;
+  left: 1rem;
+  top: -5rem;
+  z-index: 100;
+}
+.skip:focus {
+  top: 1rem;
+}
+@media (max-width: 640px) {
+  .panel {
+    padding: 1.1rem;
+  }
+}

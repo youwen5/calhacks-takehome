@@ -1,0 +1,55 @@
+{
+  "name": "calhacks-portal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "node --env-file-if-exists=.env node_modules/vite/bin/vite.js dev --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "prepare": "svelte-kit sync",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "node --env-file-if-exists=.env --import tsx scripts/migrate.ts",
+    "db:seed": "node --env-file-if-exists=.env --import tsx scripts/seed.ts",
+    "admin:grant": "node --env-file-if-exists=.env --import tsx scripts/admin.ts",
+    "db:backup": "node --env-file-if-exists=.env --import tsx scripts/backup.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:container": "node scripts/container-smoke.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-ses": "3.1129.0",
+    "@better-auth/drizzle-adapter": "1.7.4",
+    "better-auth": "1.7.4",
+    "better-sqlite3": "13.0.3",
+    "drizzle-orm": "0.45.2",
+    "zod": "4.6.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@sveltejs/adapter-node": "5.5.7",
+    "@sveltejs/kit": "2.70.3",
+    "@sveltejs/vite-plugin-svelte": "7.3.0",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.0.0",
+    "drizzle-kit": "0.31.10",
+    "esbuild": "0.28.2",
+    "prettier": "^3.9.6",
+    "prettier-plugin-svelte": "^4.1.1",
+    "svelte": "5.57.0",
+    "svelte-check": "4.7.6",
+    "tailwindcss": "4.3.3",
+    "tsx": "4.23.13",
+    "typescript": "~5.9.3",
+    "vite": "8.3.0",
+    "vitest": "5.0.0"
+  }
+}

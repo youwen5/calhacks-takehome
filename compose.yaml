@@ -1,0 +1,19 @@
+services:
+  portal:
+    image: calhacks-portal:local
+    restart: unless-stopped
+    ports:
+      - '127.0.0.1:3000:3000'
+    volumes:
+      - ./portal-data:/data
+    environment:
+      DATABASE_PATH: /data/portal.db
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?Set the public HTTPS URL}
+      ORIGIN: ${BETTER_AUTH_URL:?Set the public HTTPS URL}
+      MAIL_MODE: ses
+      AWS_REGION: ${AWS_REGION:?Set AWS_REGION}
+      AWS_SES_FROM: ${AWS_SES_FROM:?Set a verified sender}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}

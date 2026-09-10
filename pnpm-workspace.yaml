@@ -1,0 +1,28 @@
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true
+# Exact versions reviewed when the initial lockfile was created. Keep the default
+# age policy for future additions; the Nix fetch must match local resolution.
+minimumReleaseAgeExclude:
+  - '@aws-sdk/client-ses@3.1129.0'
+  - '@aws-sdk/core@3.978.0'
+  - '@aws-sdk/credential-provider-env@3.972.71'
+  - '@aws-sdk/credential-provider-http@3.972.73'
+  - '@aws-sdk/credential-provider-ini@3.973.16'
+  - '@aws-sdk/credential-provider-login@3.972.78'
+  - '@aws-sdk/credential-provider-node@3.972.83'
+  - '@aws-sdk/credential-provider-process@3.972.71'
+  - '@aws-sdk/credential-provider-sso@3.973.15'
+  - '@aws-sdk/credential-provider-web-identity@3.972.77'
+  - '@aws-sdk/nested-clients@3.997.45'
+  - '@aws-sdk/token-providers@3.1129.0'
+  - '@better-auth/core@1.7.4'
+  - '@better-auth/drizzle-adapter@1.7.4'
+  - '@better-auth/kysely-adapter@1.7.4'
+  - '@better-auth/memory-adapter@1.7.4'
+  - '@better-auth/mongo-adapter@1.7.4'
+  - '@better-auth/prisma-adapter@1.7.4'
+  - '@better-auth/telemetry@1.7.4'
+  - 'better-auth@1.7.4'
+  - 'vite@8.3.0'
+  - 'zod@4.6.1'
