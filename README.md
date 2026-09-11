@@ -3,7 +3,7 @@
 A hackathon application portal for multiple events, with independent hacker and
 mentor applications, organizer grading, waitlists, and explicit decision release.
 Built as a SvelteKit/TypeScript monolith with SQLite, Better Auth, Drizzle, and a
-Nix-built Docker/OCI image. All seeded events are hypothetical.
+Nix-built Docker/OCI image. Seeds use 2025 Cal Hacks event names and descriptions with open testing dates.
 
 ## Run locally
 
@@ -103,3 +103,8 @@ Its production repository remains unchanged; no production data or judging code
 was reused. See the
 [reference review](docs/reference-review.md). **Production deployment is not performed
 as part of this implementation**, per the user's instruction.
+
+Applicants can upload a PDF resume (up to 2 MiB) and preview it before submission.
+Reviewers see the submitted PDF alongside answers. Event organizers have application
+analytics and a reviewer leaderboard; event managers can export CSV/JSON datasets
+from Data warehouse. Resumes use SQLite storage and need no cloud credentials.

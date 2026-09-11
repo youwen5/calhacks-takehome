@@ -42,9 +42,24 @@ Do not carry over SB Hacks logos, Storke product labels, SB Hacks email addresse
 Discord links, event dates, or domain-based organizer permissions. Reference and
 attribution documentation may still name Storke and SB Hacks accurately.
 
-The user explicitly permits invented event details for this hypothetical take-home.
-Create coherent demo names, dates, venues, and descriptions without requiring
-confirmation. Identify seeded events as hypothetical/demo events so they are not
-mistaken for actual Cal Hacks announcements. Use reserved example domains for
-fictional contact addresses, and keep demo content separate from real provider
-credentials and authorization configuration.
+Use the sourced event names and descriptions below, with open testing dates per
+the user’s instruction. Use reserved example domains for fictional contact addresses
+and keep demo accounts separate from real provider credentials and authorization.
+
+## 2025 event copy
+
+Per the September 11 follow-up, local seeds use **Cal Hacks 12.0** and **UC Berkeley
+AI Hackathon**, with concise paraphrases of their public descriptions:
+
+- [Cal Hacks 12.0 organizer listing](https://cal-hacks-12-0.devpost.com/): October
+  24–26, 2025, Palace of Fine Arts, San Francisco; a collegiate hackathon with
+  building, workshops, and collaboration.
+- [UC Berkeley AI Hackathon](https://ai.hackberkeley.org/): June 21–22, 2025,
+  Martin Luther King Jr. Student Union; a two-day AI event with workshops, panels,
+  collaborative projects, and prizes.
+
+Names, descriptions, and venues come from those events. Dates deliberately remain
+open for testing, as explicitly requested; they are not historical event dates.
+Stable local slugs are retained to preserve existing links and application records.
+`scripts/demo-events.ts` holds the source copy. Seed reruns preserve organizer
+edits and existing dates. No production applicant data is copied.

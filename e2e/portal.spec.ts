@@ -131,8 +131,16 @@ test('registration, local verification, two forms, organizer review, gated waitl
   await applicant
     .getByLabel('What would you like to build or learn?')
     .fill('Learn to design a welcoming interface.');
+  await applicant.getByLabel('Resume PDF (optional)').setInputFiles('tests/fixtures/resume.pdf');
   await applicant.getByRole('button', { name: 'Save draft' }).click();
   await expect(applicant.getByRole('status')).toContainText('saved');
+  await expect(applicant.getByTitle('Your resume PDF')).toBeVisible();
+  const resumeUrl = await applicant
+    .getByRole('link', { name: 'Open resume PDF' })
+    .getAttribute('href');
+  const resumeResponse = await applicant.request.get(resumeUrl!);
+  expect(resumeResponse.status()).toBe(200);
+  expect(await resumeResponse.body()).toEqual(readFileSync('tests/fixtures/resume.pdf'));
   await applicant.reload();
   await expect(applicant.getByLabel('School or organization')).toHaveValue('Browser University');
   await applicant.getByRole('button', { name: 'Submit application' }).click();
@@ -153,6 +161,11 @@ test('registration, local verification, two forms, organizer review, gated waitl
   await login(reviewer, 'reviewer@example.com');
   await reviewer.goto(`/organizer/cal-hacks-fall?search=${encodeURIComponent(email)}&type=hacker`);
   await reviewer.getByRole('link', { name, exact: true }).click();
+  await expect(reviewer.getByTitle('Applicant resume PDF')).toBeVisible();
+  expect((await reviewer.request.get(resumeUrl!)).status()).toBe(200);
+  expect(
+    (await reviewer.request.get(resumeUrl!.replace('cal-hacks-fall', 'cal-hacks-spring'))).status(),
+  ).toBe(404);
   await reviewer.waitForURL('**/applications/*');
   const reviewURL = reviewer.url();
   await reviewer.getByRole('button', { name: 'Claim application', exact: true }).click();
@@ -327,4 +340,48 @@ test('public header stays in content flow and the banner spans the dated timelin
   const mobilePoster = await page.locator('.event-poster').boundingBox();
   const mobileTimeline = await page.locator('.timeline').boundingBox();
   expect(mobilePoster!.y + mobilePoster!.height).toBeLessThan(mobileTimeline!.y);
+});
+
+test('organizer analytics, reviewer leaderboard, exports, and aligned filters', async ({
+  page,
+}) => {
+  await login(page, 'manager@example.com');
+  await page.goto('/organizer/cal-hacks-fall');
+  const field = await page.getByRole('textbox', { name: 'Search', exact: true }).boundingBox();
+  const button = await page.getByRole('button', { name: 'Filter', exact: true }).boundingBox();
+  expect(Math.abs(field!.y + field!.height - button!.y - button!.height)).toBeLessThan(2);
+  await page.getByRole('link', { name: 'Application analytics', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Application analytics', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Published statuses' })).toBeVisible();
+  await page.getByRole('link', { name: 'Leaderboard', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Reviewer leaderboard' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'Riley Reviewer', exact: true })).toBeVisible();
+  await page.getByRole('link', { name: 'Data warehouse', exact: true }).click();
+  const response = await page.request.get(
+    '/organizer/cal-hacks-fall/data-warehouse/applications?format=json',
+  );
+  expect(response.status()).toBe(200);
+  const records = await response.json();
+  expect(records.length).toBeGreaterThan(0);
+  expect(records[0]).toHaveProperty('resumeFilename');
+  expect(records[0]).not.toHaveProperty('password');
+  const download = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'Export CSV', exact: true }).first().click();
+  expect((await download).suggestedFilename()).toBe('participants.csv');
+});
+
+test('application card titles stay aligned when only one has a decision badge', async ({
+  page,
+}) => {
+  await login(page, 'applicant@example.com');
+  await page.goto('/events/cal-hacks-fall');
+  const titles = await page.locator('.application-card h2').all();
+  const first = await titles[0].boundingBox(),
+    second = await titles[1].boundingBox();
+  expect(Math.abs(first!.y - second!.y)).toBeLessThan(2);
+  await expect(
+    page.locator('.application-card').first().getByText('waitlisted', { exact: true }),
+  ).toBeVisible();
 });

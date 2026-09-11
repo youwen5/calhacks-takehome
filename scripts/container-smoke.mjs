@@ -30,6 +30,8 @@ const env = [
 const persistedApplicationCheck = `
   const row=d.prepare("SELECT a.name, a.status, h.ambition FROM application a JOIN hacker_answer h ON h.applicationId=a.id WHERE a.id='smoke-application'").get();
   if(row?.name!=='Synthetic Builder'||row.status!=='submitted'||row.ambition!=='Learn together')process.exit(1);
+  const resume=d.prepare("SELECT filename, bytes FROM resume WHERE applicationId='smoke-application'").get();
+  if(resume?.filename!=='resume.pdf'||Buffer.from(resume.bytes).toString()!=='%PDF-1.4 container resume %%EOF')process.exit(1);
   if(d.prepare('PRAGMA foreign_key_check').all().length)process.exit(1);
 `;
 function start() {
@@ -78,7 +80,7 @@ try {
       "INSERT INTO offered_type(eventId,type) VALUES('smoke-event','hacker');"+
       "INSERT INTO application(id,eventId,userId,type,status,name,formVersion,rubricVersion,updatedAt,submittedAt) VALUES('smoke-application','smoke-event','smoke-user','hacker','submitted','Synthetic Builder',1,1,1,1);"+
       "INSERT INTO hacker_answer(applicationId,interests,experience,ambition) VALUES('smoke-application','Community software','A test project','Learn together'); COMMIT;"
-    );d.close()`,
+    );d.prepare("INSERT INTO resume(applicationId,filename,bytes,updatedAt) VALUES('smoke-application','resume.pdf',?,1)").run(Buffer.from('%PDF-1.4 container resume %%EOF'));d.close()`,
   ]);
   run(['exec', name, 'calhacks-backup', '/data/backup.db']);
   run(['stop', '-t', '5', name]);
@@ -145,7 +147,7 @@ try {
   if (rejected.status === 0 || !rejected.stderr.includes('development-only'))
     throw new Error('Production outbox was not rejected.');
   console.log(
-    'Container smoke passed: migration, HTTP, persistence, migration failure, backup restoration, production mail guard. No external network used.',
+    'Container smoke passed: migration, HTTP, application/PDF persistence, migration failure, backup restoration, production mail guard. No external network used.',
   );
 } finally {
   run(['rm', '-f', name], true);

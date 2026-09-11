@@ -78,3 +78,11 @@ spacing. Application-type choices follow below because Colmena supports multiple
 independent applications. Per-event decision, check-in, and opening-ceremony dates
 replace Storke's hardcoded single-event schedule; planned dates do not trigger
 admission publication.
+
+The reporting follow-up adapts Storke's application-stats cards/distributions,
+admin reviewer leaderboard (period tabs, ranked table, published outcome columns),
+and data-warehouse export cards. It does not reuse the broken project judging
+subsystem. Permissions are event-specific, leaderboard credit comes from completed
+reviews, and latest released revisions avoid duplicate counts after promotions.
+Exports deliberately omit auth data and private drafts. Resumes follow Storke's
+upload/preview flow but use atomic SQLite storage instead of S3 presigned URLs.

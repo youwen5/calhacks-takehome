@@ -53,11 +53,11 @@
   <div class="grid">
     {#each data.event.types as offered}{@const definition = forms[offered.type]}{@const app =
         data.applications.find((a) => a.type === offered.type)?.application}
-      <article class="panel">
-        <div class="row spread">
+      <article class="panel application-card">
+        <div class="application-card-heading">
+          <h2>{definition.label}</h2>
           {#if app}<span class="badge {app.status}">{app.status}</span>{/if}
         </div>
-        <h2>{definition.label}</h2>
         <p class="muted">{definition.description}</p>
         <a
           class="button"
@@ -73,6 +73,26 @@
 </section>
 
 <style>
+  .application-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .application-card-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 32px;
+  }
+  .application-card h2,
+  .application-card p {
+    margin: 0;
+  }
+  .application-card .button {
+    margin-top: auto;
+    align-self: flex-start;
+  }
   .event-layout {
     display: grid;
     grid-template-columns: 1fr 3fr;

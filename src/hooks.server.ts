@@ -29,7 +29,11 @@ export const handle: Handle = async ({ event, resolve }) => {
     }
   }
   const length = Number(event.request.headers.get('content-length') || 0);
-  if (length > 65_536) return new Response('Request too large.', { status: 413 });
+  const applicationUpload =
+    event.request.method === 'POST' &&
+    /^\/events\/[^/]+\/applications\/[^/]+$/.test(event.url.pathname);
+  if (length > (applicationUpload ? 2 * 1024 * 1024 + 65_536 : 65_536))
+    return new Response('Request too large.', { status: 413 });
   const auth = getAuth();
   event.locals.user = (await auth.api.getSession({ headers: event.request.headers }))?.user ?? null;
   let response = await svelteKitHandler({ event, resolve, auth, building });
@@ -46,6 +50,6 @@ export const handle: Handle = async ({ event, resolve }) => {
   response.headers.set('Cache-Control', 'private, no-store');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('Referrer-Policy', 'same-origin');
-  response.headers.set('X-Frame-Options', 'DENY');
+  if (!response.headers.has('X-Frame-Options')) response.headers.set('X-Frame-Options', 'DENY');
   return response;
 };

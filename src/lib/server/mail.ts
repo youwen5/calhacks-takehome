@@ -24,7 +24,7 @@ export async function sendAuthEmail(to: string, url: string, kind: 'verify' | 'r
     kind === 'verify'
       ? 'Verify your Cal Hacks Portal email'
       : 'Reset your Cal Hacks Portal password';
-  const text = `Cal Hacks Portal\n\n${kind === 'verify' ? 'Verify your email to submit applications.' : 'Use the link below to choose a new password.'}\n\n${url}\n\nIf you did not request this, you can ignore this message.\nThis is a hypothetical Cal Hacks take-home portal.`;
+  const text = `Cal Hacks Portal\n\n${kind === 'verify' ? 'Verify your email to submit applications.' : 'Use the link below to choose a new password.'}\n\n${url}\n\nIf you did not request this, you can ignore this message.`;
   if (config.mode === 'outbox') {
     await mkdir(config.directory, { recursive: true, mode: 0o700 });
     await writeFile(

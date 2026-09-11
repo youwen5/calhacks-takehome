@@ -1,3 +1,4 @@
+import { reports, toCsv } from '../src/lib/server/reports';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { eq } from 'drizzle-orm';
@@ -496,5 +497,128 @@ describe('event schedule', () => {
       status: 'submitted',
       publishedAt: null,
     });
+  });
+});
+
+describe('resume PDFs', () => {
+  const file = { filename: 'resume.pdf', bytes: Buffer.from('%PDF-1.4\nTest resume\n%%EOF') };
+  it('keeps draft files private, freezes the submitted file, and scopes access to an event', () => {
+    const a = p.saveApplication('fall', 'applicant', 'hacker', 0, hacker, false, file);
+    expect(p.resume('applicant', 'fall', a).bytes).toEqual(file.bytes);
+    expect(() => p.resume('reviewer', 'fall', a)).toThrow('private');
+    expect(() => p.resume('other', 'fall', a)).toThrow('permission');
+    expect(() => p.resume('applicant', 'spring', a)).toThrow('not found');
+    expect(JSON.stringify(p.applicant('fall', 'applicant', 'hacker'))).not.toContain('Test resume');
+    p.saveApplication('fall', 'applicant', 'hacker', 1, hacker, true);
+    expect(p.resume('reviewer', 'fall', a).bytes).toEqual(file.bytes);
+    expect(p.reviewDetail('reviewer', 'fall', a).resume?.filename).toBe('resume.pdf');
+    expect(() => p.saveApplication('fall', 'applicant', 'hacker', 2, hacker, false, null)).toThrow(
+      'another tab',
+    );
+    p.changeMember('manager', 'fall', 'reviewer@example.com', 'remove');
+    expect(() => p.resume('reviewer', 'fall', a)).toThrow('permission');
+  });
+  it('validates uploads atomically and supports replacement and removal', () => {
+    expect(() =>
+      p.saveApplication('fall', 'applicant', 'hacker', 0, hacker, false, {
+        filename: 'fake.pdf',
+        bytes: Buffer.from('not a pdf'),
+      }),
+    ).toThrow('PDF');
+    expect(p.applicant('fall', 'applicant', 'hacker').application).toBeNull();
+    expect(() =>
+      p.saveApplication('fall', 'applicant', 'hacker', 0, hacker, false, {
+        filename: 'large.pdf',
+        bytes: Buffer.alloc(2 * 1024 * 1024 + 1),
+      }),
+    ).toThrow('2 MB');
+    const a = p.saveApplication('fall', 'applicant', 'hacker', 0, hacker, false, file);
+    p.saveApplication('fall', 'applicant', 'hacker', 1, hacker, false, {
+      ...file,
+      filename: 'updated.pdf',
+    });
+    expect(() => p.saveApplication('fall', 'applicant', 'hacker', 1, hacker, false, null)).toThrow(
+      'another tab',
+    );
+    expect(p.resume('applicant', 'fall', a).filename).toBe('updated.pdf');
+    p.saveApplication('fall', 'applicant', 'hacker', 2, hacker, false, null);
+    expect(() => p.resume('applicant', 'fall', a)).toThrow('No resume');
+  });
+});
+
+describe('organizer reports', () => {
+  it('counts only the latest published revision and keeps prepared decisions private', () => {
+    const r = reports(connection.db, () => time);
+    const a = submit();
+    complete(a);
+    const waitlist = prepare(a, 'waitlisted');
+    expect(r.analytics('reviewer', 'fall').statuses).toEqual([{ label: 'submitted', count: 1 }]);
+    p.publish('manager', 'fall', p.createRelease('manager', 'fall', [waitlist]));
+    const promotion = prepare(a, 'accepted', 1);
+    expect(r.warehouse('manager', 'fall').accepted).toBe(0);
+    p.publish('manager', 'fall', p.createRelease('manager', 'fall', [promotion]));
+    expect(r.analytics('reviewer', 'fall')).toMatchObject({
+      total: 1,
+      reviewed: 1,
+      statuses: [{ label: 'accepted', count: 1 }],
+    });
+    expect(r.leaderboard('reviewer', 'fall', 'all')).toMatchObject([
+      { total: 1, accepted: 1, waitlisted: 0 },
+    ]);
+    expect(r.export('manager', 'fall', 'accepted')).toHaveLength(1);
+    expect(r.analytics('reviewer', 'fall', 'mentor').total).toBe(0);
+    time += 8 * 86_400_000;
+    expect(r.leaderboard('reviewer', 'fall', 'week')).toHaveLength(0);
+  });
+  it('checks event membership and manager-only export access, excludes private draft answers', () => {
+    const r = reports(connection.db, () => time);
+    p.saveApplication(
+      'fall',
+      'applicant',
+      'hacker',
+      0,
+      { ...hacker, organization: 'PRIVATE DRAFT' },
+      false,
+    );
+    submit('other', 'mentor');
+    expect(() => r.analytics('applicant', 'fall')).toThrow('access');
+    expect(() => r.analytics('reviewer', 'spring')).toThrow('access');
+    expect(() => r.export('reviewer', 'fall', 'participants')).toThrow('access');
+    expect(() => r.export('admin', 'fall', 'applications')).toThrow('access');
+    expect(r.warehouse('manager', 'fall')).toEqual({
+      participants: 2,
+      applications: 1,
+      accepted: 0,
+    });
+    expect(JSON.stringify(r.analytics('reviewer', 'fall'))).not.toContain('PRIVATE DRAFT');
+    const records = r.export('manager', 'fall', 'applications');
+    expect(records).toHaveLength(1);
+    expect(JSON.stringify(records)).not.toContain('PRIVATE DRAFT');
+    expect(r.export('manager', 'spring', 'participants')).toHaveLength(0);
+    expect(r.export('manager', 'fall', 'participants')[0]).not.toHaveProperty('password');
+    p.changeMember('manager', 'fall', 'reviewer@example.com', 'remove');
+    expect(() => r.leaderboard('reviewer', 'fall', 'all')).toThrow('access');
+    expect(toCsv([{ name: '=HYPERLINK("bad")', notes: 'a,b\n"quoted"' }])).toContain("'=HYPERLINK");
+    expect(toCsv([{ name: ' \t+1' }])).toContain("' \t+1");
+  });
+  it('uses the event timezone for today and excludes incomplete reviews', () => {
+    time = Date.parse('2033-05-18T06:55:00Z');
+    // The fixture window is unrelated to this date; only completion times change.
+    const e = p.event('fall');
+    time = e.opensAt + 100;
+    const a = submit();
+    complete(a);
+    const r = reports(connection.db, () => time);
+    expect(r.leaderboard('reviewer', 'fall', 'today')).toHaveLength(1);
+    const b = submit('other');
+    p.claim('reviewer', 'fall', b, 'acquire');
+    expect(r.leaderboard('reviewer', 'fall', 'all')[0].total).toBe(1);
+    connection.db
+      .update(s.review)
+      .set({ completedAt: Date.parse('2033-05-18T06:55:00Z') })
+      .where(eq(s.review.applicationId, a))
+      .run();
+    time = Date.parse('2033-05-18T07:05:00Z');
+    expect(r.leaderboard('reviewer', 'fall', 'today')).toHaveLength(0);
   });
 });

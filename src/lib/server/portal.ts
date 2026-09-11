@@ -1,3 +1,4 @@
+import { validateResume, type ResumeUpload } from './resume';
 import { eventSchedule } from '../domain/schedule';
 import { and, eq, ne, desc, asc, sql, like, or, inArray } from 'drizzle-orm';
 import { z } from 'zod';
@@ -6,14 +7,8 @@ import * as s from './db/schema';
 import { typeSchema, parseAnswers, decisionSchema, type ApplicationType } from '../domain/forms';
 
 type QueryDb = Pick<PortalDatabase, 'select' | 'insert' | 'update' | 'delete'>;
-export class PortalError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-  ) {
-    super(message);
-  }
-}
+import { PortalError } from './errors';
+export { PortalError } from './errors';
 function requireThat(condition: unknown, status: number, message: string): asserts condition {
   if (!condition) throw new PortalError(status, message);
 }
@@ -220,6 +215,22 @@ export function portal(db: PortalDatabase, now: () => number = Date.now) {
         types: db.select().from(s.offeredType).where(eq(s.offeredType.eventId, e.id)).all(),
       };
     },
+    resume(actor: string, slug: string, applicationId: string) {
+      const e = getEvent(db, slug);
+      const a = db
+        .select()
+        .from(s.application)
+        .where(and(eq(s.application.id, applicationId), eq(s.application.eventId, e.id)))
+        .get();
+      requireThat(a, 404, 'Application not found.');
+      if (a.userId !== actor) {
+        applicationFor(db, actor, e.id, applicationId);
+        requireThat(a.status === 'submitted', 403, 'Draft resumes are private.');
+      }
+      const file = db.select().from(s.resume).where(eq(s.resume.applicationId, a.id)).get();
+      requireThat(file, 404, 'No resume uploaded.');
+      return file;
+    },
     applicant(slug: string, actor: string, rawType: string) {
       const e = getEvent(db, slug);
       visible(db, e, actor);
@@ -249,6 +260,12 @@ export function portal(db: PortalDatabase, now: () => number = Date.now) {
         formVersion: a.formVersion,
         application: {
           id: a.id,
+          resume:
+            db
+              .select({ filename: s.resume.filename })
+              .from(s.resume)
+              .where(eq(s.resume.applicationId, a.id))
+              .get() ?? null,
           type: a.type,
           version: a.version,
           updatedAt: a.updatedAt,
@@ -272,6 +289,7 @@ export function portal(db: PortalDatabase, now: () => number = Date.now) {
       version: number,
       input: unknown,
       submit: boolean,
+      resumeUpload?: ResumeUpload | null,
     ) {
       return atomic((q) => {
         const e = getEvent(q, slug);
@@ -316,6 +334,7 @@ export function portal(db: PortalDatabase, now: () => number = Date.now) {
         } catch (err) {
           throw new PortalError(400, err instanceof Error ? err.message : 'Invalid answers.');
         }
+        if (resumeUpload) validateResume(resumeUpload);
         const applicationId = existing?.id ?? id();
         const common = {
           name: data.name,
@@ -339,6 +358,16 @@ export function portal(db: PortalDatabase, now: () => number = Date.now) {
               formVersion: offered.formVersion,
               rubricVersion: offered.rubricVersion,
               ...common,
+            })
+            .run();
+        if (resumeUpload === null)
+          q.delete(s.resume).where(eq(s.resume.applicationId, applicationId)).run();
+        else if (resumeUpload)
+          q.insert(s.resume)
+            .values({ applicationId, ...resumeUpload, updatedAt: time })
+            .onConflictDoUpdate({
+              target: s.resume.applicationId,
+              set: { ...resumeUpload, updatedAt: time },
             })
             .run();
         if ('interests' in data)
@@ -633,6 +662,12 @@ export function portal(db: PortalDatabase, now: () => number = Date.now) {
       const currentClaim = db.select().from(s.claim).where(eq(s.claim.applicationId, a.id)).get();
       return {
         application: a,
+        resume:
+          db
+            .select({ filename: s.resume.filename })
+            .from(s.resume)
+            .where(eq(s.resume.applicationId, a.id))
+            .get() ?? null,
         answers: answers(db, a),
         review: db.select().from(s.review).where(eq(s.review.applicationId, a.id)).get() ?? null,
         claim: currentClaim

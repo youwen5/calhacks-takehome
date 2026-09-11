@@ -1,3 +1,4 @@
+import { demoEvents } from './demo-events';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { eq } from 'drizzle-orm';
 import { database } from '../src/lib/server/db';
@@ -33,18 +34,14 @@ db.insert(s.administrator).values({ userId: manager }).onConflictDoNothing().run
 const p = portal(db);
 const now = Date.now(),
   day = 86_400_000;
-for (const [slug, name, offset] of [
-  ['cal-hacks-fall', 'Cal Hacks: Fall Build Weekend', 30],
-  ['cal-hacks-spring', 'Cal Hacks: Spring Forward', 100],
-] as const) {
+for (const { slug, name, offset, description, venue } of demoEvents) {
   if (db.select().from(s.event).where(eq(s.event.slug, slug)).get()) continue;
   p.createEvent(
     manager,
     {
       name,
-      description:
-        'A hypothetical weekend for big questions, small experiments, and the people who make them happen. Bring your curiosity; we’ll bring the community.',
-      venue: 'Berkeley, California · Demo venue',
+      description,
+      venue,
       timezone: 'America/Los_Angeles',
       opensAt: now - day,
       closesAt: now + (offset - 7) * day,

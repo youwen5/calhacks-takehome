@@ -62,7 +62,7 @@
             export NODE_ENV=production
             export HOST=0.0.0.0
             export PORT="''${PORT:-3000}"
-            export BODY_SIZE_LIMIT=65536
+            export BODY_SIZE_LIMIT=2162688
             export DATABASE_PATH="''${DATABASE_PATH:-/data/portal.db}"
             export MIGRATIONS_DIR=${app}/app/drizzle
             ${nodejs}/bin/node ${app}/app/dist/migrate.mjs

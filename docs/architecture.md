@@ -102,7 +102,7 @@ decisions. Centralize transitions and check expected versions in the writes.
 
 Use explicit draft saving and version checks to prevent stale-tab overwrites.
 Start with concise shared questions, type-specific essays, and optional profile
-links; resume uploads and object storage are outside the first version. Use three
+links and optional PDF resumes stored in SQLite. Object storage is not required. Use three
 anchored rubric criteria per type scored as integers 1–5, summed without normalization
 or automatic admission thresholds. Require complete grades before review completion.
 
@@ -327,7 +327,7 @@ real HTTPS origin and proxy trust, restrict return paths to the application, and
 bounded request sizes and rate limits. Render essays/notes as text; profile links
 allow HTTP(S) only. No public demo outbox or seeded platform-admin password.
 
-Use indexed event/type/status lists and bounded pagination. Exports, automatic
+Use indexed event/type/status lists and bounded pagination. Automatic
 promotions, ranking, RSVP, scheduled release, and admission emails are deferred.
 Verify representative seeded-data performance before claiming scale.
 
@@ -352,3 +352,55 @@ end. The timeline is a planned schedule, not evidence of publication or attendan
 Passing the decision date never releases decisions; exact manager-approved release
 batches remain the only publication mechanism. The migration adds nullable columns
 and preserves all existing event/application data.
+
+### Resumes and organizer reporting
+
+The September 11 follow-up expands scope to PDF resumes, application analytics,
+a reviewer leaderboard, and a data warehouse. These are implemented features,
+superseding the earlier deferrals of uploads and exports.
+
+Resumes are optional on both application types. A dedicated SQLite table stores
+one PDF per application, its display filename, and timestamp. Keeping small files
+in SQLite makes application/file writes atomic and includes files in existing
+backup/restore and volume persistence. There is no S3 dependency or credential
+setup. The tradeoff is database growth (up to 2 MiB per application); a larger
+service could move bytes to private object storage behind the same authorization.
+
+Application POST bodies are capped at 2 MiB + 64 KiB while ordinary forms retain
+the 64 KiB cap. Body reads enforce limits even without Content-Length. The server
+checks PDF extension, signature, end marker, and size; this is format screening,
+not antivirus or comprehensive PDF validation. Filenames are sanitized metadata,
+never paths. Draft uploads can be replaced/removed, with the same version checks
+and transaction as the answers. Submission freezes both. Files are never serialized
+into page data; owner reads and submitted-application reviewer reads go through a
+private authenticated endpoint, checking current event membership every time.
+PDF responses use nosniff, no-store, same-origin framing, and a sandbox CSP. Native
+browser PDF preview is embedded in applicant and reviewer pages, with an open-PDF
+fallback for browsers without embedded viewing. Existing applications remain valid
+without a resume; a file must be reselected if a form submission fails.
+
+Application analytics show draft/submitted/reviewed counts, published statuses,
+type distribution, submission dates in the event timezone, top 20 organizations,
+and completed score totals. Draft answers stay private; the acting organizer's
+application is excluded from score aggregates. Fields not collected (demographics,
+RSVP/check-in, graduation years) have no invented chart values.
+
+The reviewer leaderboard counts completed reviews, independently of release.
+Filters cover all time, the trailing seven days, and today in the event timezone.
+Outcome columns use the latest published revision, never pending preparations.
+The application reviewer remains credited after a manager promotes a waitlist entry.
+Current event members can view reports; platform-wide admin status alone is not
+sufficient. Manager-only data warehouse exports participants associated with this
+event, submitted applications, and currently accepted applications in CSV or JSON.
+Accepted is not labeled confirmed attendance: this portal has no RSVP workflow.
+Exports omit auth secrets, private draft responses, unpublished decisions, grades,
+and PDF bytes (only the resume filename is included). CSV cells neutralize formula
+prefixes and escape commas, quotes, and newlines. Exports are recorded in the audit
+log and served with private/no-store headers. These are data exports, not a complete
+backup; use the SQLite backup command for disaster recovery.
+
+Reports query event-scoped relational data without external analytics services.
+Aggregations run over compact result sets, with no per-application query loop.
+Exports materialize the selected event dataset in memory; very large essay datasets
+would warrant streaming or background export generation. No scale/load claim is
+made from the functional checks.

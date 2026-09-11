@@ -14,8 +14,15 @@ export const load: PageServerLoad = ({ params, locals }) =>
 export const actions: Actions = {
   default: async ({ params, locals, request }) => {
     const actor = signedIn(locals);
-    const f = await formData(request);
-    const values = Object.fromEntries(f);
+    const f = await formData(request, 2 * 1024 * 1024 + 65_536);
+    const values = Object.fromEntries([...f].filter(([, value]) => typeof value === 'string'));
+    const file = f.get('resume');
+    const upload =
+      file instanceof File && file.size
+        ? { filename: file.name, bytes: Buffer.from(await file.arrayBuffer()) }
+        : string(f, 'removeResume') === 'yes'
+          ? null
+          : undefined;
     const result = actionData(() =>
       service().saveApplication(
         params.eventSlug,
@@ -24,6 +31,7 @@ export const actions: Actions = {
         number(f, 'version'),
         values,
         string(f, 'intent') === 'submit',
+        upload,
       ),
     );
     if ('status' in result) return fail(result.status, { ...result.data, values });

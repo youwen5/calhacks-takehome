@@ -124,7 +124,7 @@
       <button class="nav-control" disabled={!ready} onclick={signout}
         ><Icon name="logout" />Sign out</button
       >{#if signoutError}<p role="alert">{signoutError}</p>{/if}
-      <small class="demo-note">Cal Hacks · Hypothetical events</small>
+      <small class="demo-note">Cal Hacks</small>
     </div>
   </aside>
   <div class="workspace">

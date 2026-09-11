@@ -46,6 +46,18 @@
 <div class="grid">
   <section class="panel">
     <h2>Application responses</h2>
+    {#if data.resume}<h3>Resume</h3>
+      <a
+        href="/events/{data.event.slug}/resumes/{data.application.id}"
+        target="_blank"
+        rel="noopener">Open resume PDF ↗</a
+      >
+      <iframe
+        title="Applicant resume PDF"
+        src="/events/{data.event.slug}/resumes/{data.application.id}#view=FitH&navpanes=0"
+        style="width:100%;height:600px;border:0;margin:16px 0"
+      ></iframe>
+    {:else}<p class="muted">No resume uploaded.</p>{/if}
     <h3>Introduction</h3>
     <p class="prose">{data.application.introduction}</p>
     {#if data.application.link}<p>
@@ -60,7 +72,6 @@
   <div class="stack">
     <section class="panel">
       <h2>Review</h2>
-      <p class="muted">Score the evidence in the application. Grades stay internal.</p>
       {#if !data.review?.completedAt}<form method="POST" action="?/claim">
           <input type="hidden" name="token" value={data.claim?.token ?? ''} />
           <div class="row">

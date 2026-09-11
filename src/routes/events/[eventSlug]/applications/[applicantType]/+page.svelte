@@ -64,7 +64,7 @@
       update.
     </div>{/if}
   {#if data.application?.status === 'accepted'}<div class="notice">
-      You’re accepted as a {data.type}! We’re excited to have you join this hypothetical event.
+      You’re accepted as a {data.type}!
     </div>{/if}
   {#if data.application?.status === 'rejected'}<div class="notice">
       Thank you for applying. We’re unable to offer you a place for this application. We hope to see
@@ -88,6 +88,7 @@
     </div>{/if}
   <form
     method="POST"
+    enctype="multipart/form-data"
     class="application-form"
     oninput={() => (dirty = true)}
     onsubmit={() => (dirty = false)}
@@ -124,6 +125,22 @@
         >
       </section>
       <section class="panel">
+        <h2>Resume</h2>
+        <label
+          >Resume PDF (optional)<input
+            type="file"
+            name="resume"
+            accept="application/pdf,.pdf"
+          /></label
+        >
+        <small>PDF, up to 2 MB. Saved with your application and locked on submission.</small>
+        {#if data.application?.resume}<p>{data.application.resume.filename}</p>
+          <label
+            ><input type="checkbox" name="removeResume" value="yes" /> Remove saved resume</label
+          >
+        {/if}
+      </section>
+      <section class="panel">
         <h2>Application essays</h2>
         {#each definition.fields as field}<label
             >{field.label}<small>{field.hint}</small><textarea name={field.key} maxlength="3000"
@@ -145,6 +162,19 @@
         })} ({data.event.timezone})</small
       >{/if}
   </form>
+  {#if data.application?.resume}<section class="panel" style="margin-top:24px">
+      <h2>Saved resume</h2>
+      <a
+        href="/events/{data.event.slug}/resumes/{data.application.id}"
+        target="_blank"
+        rel="noopener">Open resume PDF ↗</a
+      >
+      <iframe
+        title="Your resume PDF"
+        src="/events/{data.event.slug}/resumes/{data.application.id}#view=FitH&navpanes=0"
+        style="width:100%;height:600px;border:0;margin-top:16px"
+      ></iframe>
+    </section>{/if}
 </div>
 
 <style>

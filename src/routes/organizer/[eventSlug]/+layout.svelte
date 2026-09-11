@@ -14,6 +14,16 @@
 >
   {#if data.role}<a class="button secondary" href="/organizer/{data.event.slug}">Applications</a
     >{/if}
+  {#if data.role}
+    <a class="button secondary" href="/organizer/{data.event.slug}/analytics"
+      >Application analytics</a
+    >
+    <a class="button secondary" href="/organizer/{data.event.slug}/leaderboard">Leaderboard</a>
+  {/if}
+  {#if data.role === 'manager'}<a
+      class="button secondary"
+      href="/organizer/{data.event.slug}/data-warehouse">Data warehouse</a
+    >{/if}
   {#if data.role === 'manager'}<a
       class="button secondary"
       href="/organizer/{data.event.slug}/releases">Decision releases</a

@@ -72,9 +72,7 @@ Record reused assets/styles in `docs/branding.md` and `docs/reference-review.md`
 Use Cal Hacks branding throughout the product: page titles, navigation, metadata,
 forms, emails, and event copy. Replace SB Hacks logos, Storke product naming, and
 organization-specific links/configuration when borrowing reference code. Preserve
-accurate attribution in developer documentation. The user permits invented event
-details for this hypothetical take-home: use coherent demo names, dates, venues,
-and descriptions, clearly identified as hypothetical events. Use reserved example
+accurate attribution in developer documentation. The user requests real 2025 event names and descriptions with open testing dates. Use reserved example
 domains for fictional contacts. Real credentials and authentication domain policies
 must still be explicitly configured rather than inferred from demo content.
 
@@ -126,3 +124,15 @@ Public event pages follow Storke's in-flow landing header and full-height timeli
 banner. Schedule milestones are per-event data with documented defaults in
 `src/lib/domain/schedule.ts`; they must never trigger or imply automatic decision
 publication. Keep schedule validation and organizer fields aligned.
+
+Resumes, analytics, reviewer leaderboards, and CSV/JSON warehouse exports are now
+in scope. Keep PDFs private, enforce the 2 MiB file cap and version-checked draft
+writes, and lock the file on submission. Never select PDF bytes in page loads.
+Reports require current event membership; exports require manager membership and
+must omit auth secrets, draft answers, and unpublished decisions. Use only the
+latest published revision when counting statuses. Calendar-day filters use the
+event timezone. Protect spreadsheet exports against formula injection.
+
+Local seeds now use sourced 2025 Cal Hacks event names/descriptions; the user
+explicitly requested keeping dates open for testing. Do not restore hypothetical
+marketing copy or overwrite existing event dates during a seed rerun.

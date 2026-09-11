@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import {
   sqliteTable,
+  blob,
   text,
   integer,
   primaryKey,
@@ -313,4 +314,14 @@ export const audit = sqliteTable('audit', {
   action: text().notNull(),
   details: text().notNull(),
   createdAt: integer().notNull(),
+});
+
+// Keep PDF bytes out of ordinary application selects and serialized page data.
+export const resume = sqliteTable('resume', {
+  applicationId: text()
+    .primaryKey()
+    .references(() => application.id),
+  filename: text().notNull(),
+  bytes: blob({ mode: 'buffer' }).notNull(),
+  updatedAt: integer().notNull(),
 });

@@ -22,7 +22,7 @@ const mentor = commonSchema.extend({ expertise: essay, mentoring: essay, availab
 export const forms = {
   hacker: {
     label: 'Hacker',
-    description: 'Make something new. Find your people. Learn by building.',
+    description: 'Placeholder requirements to apply as Hacker',
     fields: [
       {
         key: 'interests',
@@ -45,7 +45,7 @@ export const forms = {
   },
   mentor: {
     label: 'Mentor',
-    description: 'Share your experience. Help a team get to their next breakthrough.',
+    description: 'Placeholder requirements to apply as Mentor',
     fields: [
       {
         key: 'expertise',

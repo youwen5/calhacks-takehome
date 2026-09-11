@@ -96,3 +96,16 @@ local volume first. The app will apply any migrations missing from the restored 
 Readiness is checked by an HTTP request to `/events` after migrations; production
 mail configuration is validated during server initialization. Mail credentials are
 resolved when sending, so configuration validation does not prove AWS delivery.
+
+### Resume storage and request limits
+
+PDF resumes require no AWS credentials: bytes are stored in the SQLite database on
+the persistent volume and included in SQLite-aware backups. Do not copy a live
+SQLite file without its WAL. Budget up to 2 MiB per uploaded resume in addition to
+application data. Migration 0003 adds the resume table without changing existing
+applications. Native browser PDF preview also provides an authenticated open-PDF link.
+
+The Nix entrypoint sets `BODY_SIZE_LIMIT=2162688` (2 MiB plus 64 KiB form overhead).
+Set the same value when running `node build` directly. Configure any reverse proxy
+request-body limit to at least this size; otherwise valid resume uploads may return
+413 before reaching the app. Ordinary forms still have a 64 KiB application limit.

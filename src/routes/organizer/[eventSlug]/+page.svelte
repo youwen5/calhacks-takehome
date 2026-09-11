@@ -15,9 +15,8 @@
     <h1>Applications</h1>
     <span class="badge">{data.queue.total} applications</span>
   </div>
-  <p class="muted">Review thoughtfully. Prepare decisions. Publish when you’re ready.</p>
 </div>
-<form method="GET" class="panel row" style="margin-bottom:1.5rem">
+<form method="GET" class="panel row filters">
   <label style="flex:2"
     >Search<input
       name="search"
@@ -79,3 +78,17 @@
       >{/if}
   </div>
 </div>
+
+<style>
+  .filters {
+    align-items: end;
+    margin-bottom: 24px;
+  }
+  .filters label {
+    margin: 0;
+    min-width: 160px;
+  }
+  .filters button {
+    flex-shrink: 0;
+  }
+</style>

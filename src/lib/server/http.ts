@@ -32,10 +32,32 @@ export function actionData<T>(work: () => T) {
 }
 export const string = (form: FormData, key: string) => String(form.get(key) ?? '');
 export const number = (form: FormData, key: string) => Number(string(form, key));
-export async function formData(request: Request) {
-  const text = await request.text();
-  if (new TextEncoder().encode(text).length > 65_536) error(413, 'Request too large.');
+export async function formData(request: Request, limit = 65_536) {
+  const reader = request.body?.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  if (reader) {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > limit) {
+        await reader.cancel();
+        error(413, 'Request too large.');
+      }
+      chunks.push(value);
+    }
+  }
+  const body = Buffer.concat(chunks);
+  const contentType = request.headers.get('content-type') || '';
+  if (contentType.startsWith('multipart/form-data')) {
+    try {
+      return await new Response(body, { headers: { 'Content-Type': contentType } }).formData();
+    } catch {
+      error(400, 'Invalid upload form.');
+    }
+  }
   const form = new FormData();
-  for (const [key, value] of new URLSearchParams(text)) form.append(key, value);
+  for (const [key, value] of new URLSearchParams(body.toString())) form.append(key, value);
   return form;
 }

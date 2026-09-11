@@ -36,10 +36,11 @@ mentor application types selected from those offered by the event. Allow one
 application per account per event per type, including both types in the same event;
 organizer access is independently provisioned per event.
 Draft saving is baseline usability. Event-day logistics, meals, sponsorship,
-project judging, score normalization, and bulk data warehouses are outside scope.
+project judging and score normalization are outside scope. The follow-up adds PDF
+resumes, application analytics, a reviewer leaderboard, and CSV/JSON exports.
 
-The user permits invented event details. Use clearly identified hypothetical events
-with realistic names, dates, venues, and descriptions for the seeded demonstration.
+Use sourced 2025 Cal Hacks event names and descriptions with open testing dates,
+as explicitly requested in the follow-up.
 
 ## Implementation sequence
 

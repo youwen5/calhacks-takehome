@@ -118,3 +118,31 @@ records, credentials, or judging subsystem were imported.
   8 applications, and 4 reviews. Existing rows use documented schedule defaults.
 - Formatting and git whitespace checks passed. No production deployment or new
   container image build was performed for this follow-up.
+
+## UI cleanup, resumes, and organizer reports — September 11, 2026
+
+- 33 Vitest tests pass, including PDF validation/size, atomic replacement/removal,
+  private draft files, immutable submitted files, event/role isolation, streamed
+  body limits, latest-publication aggregation, event-timezone leaderboard periods,
+  export permissions, private draft exclusion, and CSV formula protection.
+- 12 Playwright tests pass. The applicant-to-organizer flow uploads a real PDF,
+  checks byte-for-byte download preservation, and verifies the embedded reviewer
+  preview and cross-event denial. Added checks cover badge/title alignment,
+  filter/button alignment, analytics, reviewer ranking, and CSV/JSON downloads.
+- Type checking reports zero errors/warnings. Production build passes. Visually
+  inspected PDF rendering (fit-width, thumbnail pane hidden), analytics, leaderboard,
+  export cards, and mobile analytics with no horizontal overflow or browser errors.
+- Nix image build passes, including its isolated 33-test run:
+  `/nix/store/p1ygin7x1w456gix5hfjf43l0iypagl5-calhacks-portal.tar.gz`.
+  The build initially exposed an Undici outbound FormData cancellation race in a
+  test fixture; the fixture now models received encoded bytes. No tests were skipped.
+- Loaded the image locally with Podman and passed the network-disabled container
+  smoke: migrations, HTTP, application/PDF persistence across replacement, SQLite
+  backup restoration including PDF bytes, fail-closed migration startup, and the
+  production email guard. This was not a production deployment.
+- Local database backup preceded migration 0003. Integrity/foreign-key checks pass;
+  the existing eight applications remain intact. Event names/descriptions/venues
+  were updated through versioned event configuration; existing dates stay open for
+  testing. The live development events page returned HTTP 200 on port 5173.
+- Formatting and git whitespace checks pass. Updated architecture, source attribution,
+  environment setup, deployment notes, and AGENTS.md document the expanded scope.
