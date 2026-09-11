@@ -15,6 +15,13 @@
       "when": 1789064763755,
       "tag": "0001_flowery_blindfold",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789162838329,
+      "tag": "0002_woozy_sauron",
+      "breakpoints": true
     }
   ]
 }

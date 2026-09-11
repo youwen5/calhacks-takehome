@@ -131,14 +131,17 @@
     <main id="main" class="portal-main" bind:this={content}>{@render children()}</main>
   </div>
 {:else}
-  <header class="public-header">
-    {@render brand()}
-    <nav aria-label="Main navigation">
-      <a href="/login">Sign in</a><a class="button secondary" href="/register">Create an account</a
-      >{@render themeButton()}
-    </nav>
-  </header>
-  <main id="main" class="public-main" bind:this={content}>{@render children()}</main>
+  <main id="main" class="public-main" bind:this={content}>
+    <header class="public-header">
+      {@render brand()}
+      <nav aria-label="Main navigation">
+        <a href="/login">Sign in</a><a class="button secondary" href="/register"
+          >Create an account</a
+        >{@render themeButton()}
+      </nav>
+    </header>
+    {@render children()}
+  </main>
 {/if}
 
 <style>
@@ -266,25 +269,23 @@
     padding: 24px;
   }
   .public-main {
-    padding-top: 40px;
+    max-width: 816px;
+    padding: 48px 24px;
   }
   .mobile-header {
     display: none;
   }
   .public-header {
-    min-height: 64px;
-    padding: 12px 24px;
+    margin-bottom: 32px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    border-bottom: 1px solid var(--color-border);
-    background: var(--color-card);
   }
   .public-header nav {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 12px;
     font-size: 14px;
   }
   .auth-tools {
@@ -330,7 +331,7 @@
   @media (max-width: 600px) {
     .public-header {
       flex-wrap: wrap;
-      padding: 12px 16px;
+      padding: 0;
     }
     .public-header nav {
       gap: 12px;

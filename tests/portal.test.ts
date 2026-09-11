@@ -442,3 +442,59 @@ describe('decision publication', () => {
     expect(() => p.publish('admin', 'fall', batch)).toThrow('permission');
   });
 });
+
+describe('event schedule', () => {
+  it('persists event-specific milestones, rejects invalid order and unauthorized edits', () => {
+    const e = p.event('fall');
+    const schedule = {
+      decisionsAt: e.closesAt + 1000,
+      checkInAt: e.startsAt + 1000,
+      openingCeremonyAt: e.startsAt + 2000,
+    };
+    expect(() =>
+      p.configure('reviewer', 'fall', e.version, { ...e, ...schedule }, 'published', [
+        'hacker',
+        'mentor',
+      ]),
+    ).toThrow('permission');
+    for (const invalid of [
+      { decisionsAt: e.closesAt - 1 },
+      { checkInAt: e.startsAt - 1 },
+      { openingCeremonyAt: e.endsAt },
+      { openingCeremonyAt: schedule.checkInAt - 1 },
+    ]) {
+      expect(() =>
+        p.configure('manager', 'fall', e.version, { ...e, ...schedule, ...invalid }, 'published', [
+          'hacker',
+          'mentor',
+        ]),
+      ).toThrow('Schedule');
+    }
+    p.configure('manager', 'fall', e.version, { ...e, ...schedule }, 'published', [
+      'hacker',
+      'mentor',
+    ]);
+    expect(p.event('fall')).toMatchObject(schedule);
+    expect(p.event('spring').decisionsAt).toBeNull();
+    const changed = p.event('fall');
+    p.configure(
+      'manager',
+      'fall',
+      changed.version,
+      { ...changed, decisionsAt: null },
+      'published',
+      ['hacker', 'mentor'],
+    );
+    expect(p.event('fall').decisionsAt).toBeNull();
+  });
+  it('does not publish prepared decisions when the scheduled date passes', () => {
+    const a = submit();
+    complete(a);
+    prepare(a);
+    time = p.event('fall').startsAt;
+    expect(p.applicant('fall', 'applicant', 'hacker').application).toMatchObject({
+      status: 'submitted',
+      publishedAt: null,
+    });
+  });
+});

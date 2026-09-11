@@ -70,3 +70,11 @@ The layout separately animates page content: 150ms upward exit, then 300ms entra
 from the left. It uses the Web Animations API through SvelteKit `onNavigate` to
 sequence the page swap without mounting duplicate copies of forms. Cached routes
 also animate. Reduced-motion mode skips movement and the page-swap delay.
+
+The public landing header now follows Storke's regular content flow (no separate
+navigation bar), with a 768px content width and a 32px gap before the event list.
+The event banner stretches alongside the entire dated timeline, with 48px step
+spacing. Application-type choices follow below because Colmena supports multiple
+independent applications. Per-event decision, check-in, and opening-ceremony dates
+replace Storke's hardcoded single-event schedule; planned dates do not trigger
+admission publication.

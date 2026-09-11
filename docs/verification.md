@@ -101,3 +101,20 @@ records, credentials, or judging subsystem were imported.
   and looked up explicitly; adding a future version must preserve the existing
   definitions and add upgrade coverage. A future deployment was not simulated by
   claiming an unimplemented version exists.
+
+## Signed-out layout and event schedule follow-up — September 11, 2026
+
+- Type checking: zero errors/warnings. Production build passed.
+- Vitest: 26 tests passed, including milestone order, event isolation, manager-only
+  configuration, and prepared decisions remaining private after the scheduled date.
+- Playwright: 10 tests passed. New coverage checks the in-flow public header,
+  all three dated milestones, desktop banner height, and mobile stacking/overflow.
+  Existing auth, application, release, and reduced-motion transition checks pass.
+- Visually inspected desktop landing/event pages and the 390px mobile event page
+  against Storke's content flow. The development server serves these changes at
+  http://localhost:5173.
+- Backed up local SQLite before applying migration 0002. Integrity check passed,
+  foreign-key check returned no violations, and counts remained 2 events,
+  8 applications, and 4 reviews. Existing rows use documented schedule defaults.
+- Formatting and git whitespace checks passed. No production deployment or new
+  container image build was performed for this follow-up.

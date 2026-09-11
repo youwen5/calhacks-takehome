@@ -88,6 +88,9 @@ export const event = sqliteTable(
     closesAt: integer().notNull(),
     startsAt: integer().notNull(),
     endsAt: integer().notNull(),
+    decisionsAt: integer(),
+    checkInAt: integer(),
+    openingCeremonyAt: integer(),
     status: text({ enum: ['draft', 'published', 'archived'] })
       .notNull()
       .default('draft'),

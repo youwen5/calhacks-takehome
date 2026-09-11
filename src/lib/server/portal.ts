@@ -1,3 +1,4 @@
+import { eventSchedule } from '../domain/schedule';
 import { and, eq, ne, desc, asc, sql, like, or, inArray } from 'drizzle-orm';
 import { z } from 'zod';
 import type { PortalDatabase } from './db';
@@ -35,11 +36,24 @@ const eventInput = z
     closesAt: z.number().int(),
     startsAt: z.number().int(),
     endsAt: z.number().int(),
+    decisionsAt: z.number().int().nullish().default(null),
+    checkInAt: z.number().int().nullish().default(null),
+    openingCeremonyAt: z.number().int().nullish().default(null),
   })
   .refine(
     (v) => v.opensAt < v.closesAt && v.closesAt <= v.startsAt && v.startsAt < v.endsAt,
     'Dates must be ordered: opening, closing, event start, event end',
-  );
+  )
+  .refine((event) => {
+    const schedule = eventSchedule(event);
+    return (
+      event.closesAt <= schedule.decisionsAt &&
+      schedule.decisionsAt <= event.startsAt &&
+      event.startsAt <= schedule.checkInAt &&
+      schedule.checkInAt <= schedule.openingCeremonyAt &&
+      schedule.openingCeremonyAt < event.endsAt
+    );
+  }, 'Schedule decisions between application close and event start; check-in and opening ceremony must follow event start and precede event end');
 
 export function portal(db: PortalDatabase, now: () => number = Date.now) {
   const atomic = <T>(fn: (tx: QueryDb) => T) => db.transaction(fn, { behavior: 'immediate' });

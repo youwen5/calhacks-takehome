@@ -29,6 +29,11 @@ export const actions: Actions = {
           closesAt: parseInstant(string(f, 'closesAt')),
           startsAt: parseInstant(string(f, 'startsAt')),
           endsAt: parseInstant(string(f, 'endsAt')),
+          decisionsAt: string(f, 'decisionsAt') ? parseInstant(string(f, 'decisionsAt')) : null,
+          checkInAt: string(f, 'checkInAt') ? parseInstant(string(f, 'checkInAt')) : null,
+          openingCeremonyAt: string(f, 'openingCeremonyAt')
+            ? parseInstant(string(f, 'openingCeremonyAt'))
+            : null,
         },
         string(f, 'slug'),
         string(f, 'manager'),

@@ -330,3 +330,25 @@ allow HTTP(S) only. No public demo outbox or seeded platform-admin password.
 Use indexed event/type/status lists and bounded pagination. Exports, automatic
 promotions, ranking, RSVP, scheduled release, and admission emails are deferred.
 Verify representative seeded-data performance before claiming scale.
+
+### Public event schedule and layout
+
+The signed-out header lives inside the same 768px content column as the event
+list, following Storke's landing-page flow. Event details use a stretching banner
+beside the complete timeline; application-type choices follow below. On mobile,
+the banner stacks above the timeline.
+
+Events have three nullable schedule columns: decisionsAt, checkInAt, and
+openingCeremonyAt. Managers can edit them with explicit timezone offsets in event
+settings. Blank values use the shared eventSchedule helper: decisions halfway
+between application close and event start, check-in at event start, and opening
+ceremony one hour after check-in (or halfway to event end for short events).
+These predictable hypothetical defaults also support existing events without
+rewriting their dates during migration. Changing event dates recomputes only blank
+milestones; explicit milestones must still fit the revised window.
+
+Server validation requires close <= decisions <= start <= check-in <= ceremony <
+end. The timeline is a planned schedule, not evidence of publication or attendance.
+Passing the decision date never releases decisions; exact manager-approved release
+batches remain the only publication mechanism. The migration adds nullable columns
+and preserves all existing event/application data.

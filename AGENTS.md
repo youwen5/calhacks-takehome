@@ -121,3 +121,8 @@ instruction prohibits production deployment. Prepare and locally verify a runnab
 build and deployment configuration; report the public URL as outstanding rather
 than claiming local checks fulfill it. Do not submit the interview form or contact
 organizers unless the user explicitly asks.
+
+Public event pages follow Storke's in-flow landing header and full-height timeline
+banner. Schedule milestones are per-event data with documented defaults in
+`src/lib/domain/schedule.ts`; they must never trigger or imply automatic decision
+publication. Keep schedule validation and organizer fields aligned.

@@ -21,6 +21,9 @@
       closesAt: number;
       startsAt: number;
       endsAt: number;
+      decisionsAt: number | null;
+      checkInAt: number | null;
+      openingCeremonyAt: number | null;
     };
   } = $props();
 </script>
@@ -62,5 +65,22 @@
           required
         /></label
       >{/each}
+  </div>
+  <p class="muted">
+    Optional schedule: if blank, decisions are scheduled halfway between application close and event
+    start, check-in at event start, and the opening ceremony one hour after check-in (or halfway to
+    event end for shorter events). These dates do not publish admission decisions.
+  </p>
+  <div class="grid">
+    {#each [{ key: 'decisionsAt', label: 'Decisions released (scheduled)' }, { key: 'checkInAt', label: 'Check in' }, { key: 'openingCeremonyAt', label: 'Opening ceremony' }] as field}
+      {@const value = event?.[field.key as 'decisionsAt']}
+      <label
+        >{field.label}<input
+          name={field.key}
+          value={value == null ? '' : new Date(value).toISOString()}
+          placeholder="Use default schedule"
+        /></label
+      >
+    {/each}
   </div>
 </fieldset>

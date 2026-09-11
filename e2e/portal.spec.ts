@@ -302,3 +302,29 @@ test('organizers create and publish a new event, offer both types, and assign a 
   await context.close();
   await reviewerContext.close();
 });
+
+test('public header stays in content flow and the banner spans the dated timeline', async ({
+  page,
+}) => {
+  await page.goto('/events');
+  await expect(page.locator('main > header').getByRole('link', { name: 'Colmena' })).toBeVisible();
+  const main = await page.locator('main').boundingBox();
+  expect(main!.width).toBeLessThanOrEqual(816);
+  await page.getByRole('link', { name: 'Explore event' }).first().click();
+  for (const title of ['Decisions released', 'Check in', 'Opening Ceremony']) {
+    const step = page
+      .locator('.timeline li')
+      .filter({ has: page.getByRole('heading', { name: title, exact: true }) });
+    await expect(step.locator('time')).toHaveAttribute('datetime', /T/);
+  }
+  await page.waitForTimeout(350);
+  const poster = await page.locator('.event-poster').boundingBox();
+  const timeline = await page.locator('.timeline').boundingBox();
+  expect(poster!.y).toBeLessThan(timeline!.y);
+  expect(poster!.y + poster!.height).toBeGreaterThanOrEqual(timeline!.y + timeline!.height);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const mobilePoster = await page.locator('.event-poster').boundingBox();
+  const mobileTimeline = await page.locator('.timeline').boundingBox();
+  expect(mobilePoster!.y + mobilePoster!.height).toBeLessThan(mobileTimeline!.y);
+});
