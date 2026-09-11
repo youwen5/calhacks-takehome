@@ -519,3 +519,56 @@ test('event pass QR, staff admission, meals and sponsor redemption work end to e
   await staff.screenshot({ path: '/tmp/colmena-check-in-desktop.png', fullPage: true });
   await context.close();
 });
+
+test('demo verification preserves unsaved answers and verifies only the signed-in user', async ({
+  page,
+  request,
+}) => {
+  const denied = await request.post('/api/demo/verify-email', {
+    headers: { Origin: 'https://other.example' },
+    data: {},
+  });
+  expect(denied.status()).toBe(403);
+  const anonymous = await request.post('/api/demo/verify-email', {
+    headers: { Origin: 'http://localhost:5174' },
+    data: {},
+    maxRedirects: 0,
+  });
+  expect(anonymous.status()).toBe(303);
+  await page.goto('/register');
+  await page.getByLabel('First name').fill('Demo');
+  await page.getByLabel('Last name').fill('Verification');
+  await page.getByLabel('Email address').fill('demo-verification-' + Date.now() + '@example.com');
+  await page.getByLabel('Password', { exact: true }).fill('Browser-demo-password!');
+  await page.getByRole('button', { name: 'Create account' }).click();
+  await page.waitForURL('**/events');
+  await page.goto('/events/cal-hacks-fall/applications/hacker');
+  await page.getByLabel('School or organization').fill('Unsaved University');
+  await page.getByLabel('Resume PDF (optional)').setInputFiles('tests/fixtures/resume.pdf');
+  // An expired session may redirect fetch to a successful HTML login response.
+  await page.route('**/api/demo/verify-email', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/html', body: '<html>Sign in</html>' }),
+  );
+  await page.getByRole('button', { name: 'Bypass email verification (demo)', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Unable to bypass verification');
+  await page.unroute('**/api/demo/verify-email');
+  await page.getByRole('button', { name: 'Bypass email verification (demo)', exact: true }).click();
+  await expect(
+    page.getByText('Verify your email before submitting.', { exact: false }),
+  ).toHaveCount(0);
+  await expect(page.getByLabel('School or organization')).toHaveValue('Unsaved University');
+  await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('saved');
+  await page.reload();
+  await expect(
+    page.getByRole('button', { name: 'Bypass email verification (demo)', exact: true }),
+  ).toHaveCount(0);
+  await expect(page.getByLabel('School or organization')).toHaveValue('Unsaved University');
+  await expect(page.getByTitle('Your resume PDF')).toBeVisible();
+  await page.getByLabel('A short introduction').fill('I enjoy building with friends.');
+  await page.getByLabel('What are you curious about?').fill('Community software');
+  await page.getByLabel('Tell us about something you tried').fill('A small garden sensor');
+  await page.getByLabel('What would you like to build or learn?').fill('Collaborative design');
+  await page.getByRole('button', { name: 'Submit application' }).click();
+  await expect(page.getByText('Your submitted answers are locked')).toBeVisible();
+});

@@ -5,7 +5,9 @@
   import { beforeNavigate } from '$app/navigation';
   let { data, form } = $props();
   let dirty = $state(false),
-    verificationMessage = $state('');
+    verificationMessage = $state(''),
+    demoVerified = $state(false),
+    verifying = $state(false);
   beforeNavigate(({ cancel, willUnload }) => {
     if (dirty && !willUnload && !window.confirm('Leave without saving your changes?')) cancel();
   });
@@ -26,6 +28,25 @@
       data.event.status === 'published' &&
       Date.now() < data.event.closesAt,
   );
+  async function bypassVerification() {
+    verifying = true;
+    verificationMessage = '';
+    try {
+      const response = await fetch('/api/demo/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      const result = await response.json();
+      if (!response.ok || result.verified !== true) throw new Error('Verification failed');
+      // Do not reload/invalidate the form: preserve unsaved answers and selected PDFs.
+      demoVerified = true;
+    } catch {
+      verificationMessage = 'Unable to bypass verification. Please try again.';
+    } finally {
+      verifying = false;
+    }
+  }
   async function resend() {
     try {
       const r = await authClient.sendVerificationEmail({
@@ -75,11 +96,20 @@
     </div>{:else if form?.ok}<div class="notice" role="status">
       Your application was saved.
     </div>{/if}
-  {#if !data.user?.emailVerified}<div class="notice">
+  {#if !data.user?.emailVerified && !demoVerified}<div class="notice">
       <p>Verify your email before submitting. You can save a draft now.</p>
-      <button class="secondary" onclick={resend}>Resend verification</button><small role="status"
-        >{verificationMessage}</small
-      >
+      <div class="row">
+        <button class="secondary" disabled={!ready || verifying} onclick={resend}
+          >Resend verification</button
+        >
+        {#if data.demoEmailVerification}<button
+            class="secondary"
+            disabled={!ready || verifying}
+            onclick={bypassVerification}
+            >{verifying ? 'Verifying…' : 'Bypass email verification (demo)'}</button
+          >{/if}
+      </div>
+      <small role="status">{verificationMessage}</small>
     </div>{/if}
   {#if !editable}<div class="notice">
       {data.application && data.application.status !== 'draft'

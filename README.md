@@ -111,3 +111,15 @@ Applicants can upload a PDF resume (up to 2 MiB) and preview it before submissio
 Reviewers see the submitted PDF alongside answers. Event organizers have application
 analytics and a reviewer leaderboard; event managers can export CSV/JSON datasets
 from Data warehouse. Resumes use SQLite storage and need no cloud credentials.
+
+## Demo email verification
+
+Unverified applicants can click **Bypass email verification (demo)** in the
+application's verification banner. This marks their signed-in account verified
+without opening an email and preserves unsaved form inputs and selected PDFs.
+It is enabled by default outside production. Set `DEMO_EMAIL_VERIFICATION=false`
+to require normal verification locally, or explicitly set it to `true` for a
+public demo. Leave it unset/false for real admissions: the bypass does not prove
+mailbox ownership. The server checks the flag, session, and request origin;
+it never accepts a target account from the browser. No additional credentials
+are required. Normal email verification and resend remain available.

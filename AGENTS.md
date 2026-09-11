@@ -149,3 +149,9 @@ use the latest published acceptance, version meal changes, and allocate codes in
 immediate transactions with one claim per sponsor/user. Preserve redeemed records.
 Follow Storke’s comparable page layouts; do not copy its global-event assumptions.
 Manage events belongs at the bottom of the sidebar, with creation collapsed.
+
+The user explicitly requested a demo-only email verification bypass in the banner.
+`src/lib/server/demo.ts` owns its runtime flag: default on outside production,
+production requires `DEMO_EMAIL_VERIFICATION=true`. The POST endpoint must check
+origin/session and update only the current account. Keep normal verification and
+resend intact, and preserve unsaved application inputs when bypassing.
