@@ -12,7 +12,7 @@
 <div class="page-head">
   <p class="eyebrow">{data.event.name}</p>
   <div class="row spread">
-    <h1>Meet your next community.</h1>
+    <h1>Applications</h1>
     <span class="badge">{data.queue.total} applications</span>
   </div>
   <p class="muted">Review thoughtfully. Prepare decisions. Publish when you’re ready.</p>

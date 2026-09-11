@@ -17,9 +17,9 @@
     return () => cancelAnimationFrame(frame);
   });
   const titles = {
-    login: 'Welcome back.',
-    register: 'Start something great.',
-    forgot: 'A fresh start.',
+    login: 'Sign in',
+    register: 'Create an account',
+    forgot: 'Reset your password',
     reset: 'Choose a new password.',
   };
   async function submit(event: SubmitEvent) {
@@ -57,11 +57,9 @@
   }
 </script>
 
-<svelte:head><title>{titles[mode]} · Cal Hacks</title></svelte:head>
+<svelte:head><title>{titles[mode]} · Colmena</title></svelte:head>
 <div class="auth-wrap">
-  <p class="eyebrow">MAKE ROOM FOR WHAT’S NEXT</p>
   <h1>{titles[mode]}</h1>
-  <p class="muted">One account. A world of people to build with.</p>
   <form class="panel" method="POST" onsubmit={submit}>
     <noscript>Enable JavaScript to use secure account authentication.</noscript>
     <fieldset disabled={!ready || busy} style="border:0;padding:0;margin:0">

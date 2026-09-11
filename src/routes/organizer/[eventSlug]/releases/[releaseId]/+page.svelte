@@ -3,10 +3,9 @@
   let { data, form } = $props();
 </script>
 
-<svelte:head><title>Release preview · Cal Hacks</title></svelte:head>
+<svelte:head><title>Release preview · Colmena</title></svelte:head>
 <div class="page-head">
-  <p class="eyebrow">EXACT RELEASE PREVIEW</p>
-  <h1>{data.release.publishedAt ? 'The next chapter is open.' : 'One last look.'}</h1>
+  <h1>{data.release.publishedAt ? 'Published release' : 'Release preview'}</h1>
   <p class="muted">
     {data.release.items.length} decisions in this release. Publication makes these results visible to
     their applicants.

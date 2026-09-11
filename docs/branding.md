@@ -1,9 +1,10 @@
 # Cal Hacks branding
 
 The user explicitly requires Cal Hacks branding in place of SB Hacks branding.
-Use “Cal Hacks” as the organization name and “Cal Hacks Portal” as the provisional
-application title. Apply this consistently to the portal shell, authentication
-screens, page metadata, application copy, and email templates.
+Use “Cal Hacks” as the organization name and “Colmena” as the application wordmark
+and page-title suffix. Keep event names and organization references as Cal Hacks.
+Use direct headings without marketing heroes, taglines, or decorative preheadings.
+Set spacing explicitly: Tailwind resets the browser's heading and paragraph margins.
 
 ## Logo asset
 

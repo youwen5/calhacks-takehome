@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 
 async function login(page: Page, email: string, password = 'CalHacks-demo-2026!') {
   await page.goto('/login');
@@ -30,6 +30,32 @@ function emailLink(email: string, subject: string) {
     .map((f) => JSON.parse(readFileSync(`${directory}/${f}`, 'utf8')))
     .find((m) => m.to === email && m.subject.includes(subject))?.url as string;
 }
+test('loopback visits use the auth origin and slow navigation shows the loading bar', async ({
+  page,
+}) => {
+  await page.goto('http://127.0.0.1:5174/login');
+  await expect(page).toHaveURL('http://localhost:5174/login');
+  await expect(page.getByLabel('Email address')).toBeEnabled();
+  await page.getByLabel('Email address').fill('unfinished@example.com');
+  const marker = './data/e2e/outbox/watch-regression.json';
+  try {
+    writeFileSync(marker, JSON.stringify({ message: 'A runtime write must not reload the form.' }));
+    await page.waitForTimeout(750);
+    await expect(page.getByLabel('Email address')).toHaveValue('unfinished@example.com');
+  } finally {
+    rmSync(marker, { force: true });
+  }
+  await page.getByRole('link', { name: 'Colmena', exact: true }).click();
+  await page.waitForURL('**/events');
+  await page.route('**/__data.json*', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    await route.continue();
+  });
+  await page.getByRole('link', { name: 'Explore event ↗', exact: true }).first().click();
+  await expect(page.getByRole('progressbar', { name: 'Loading page' })).toBeVisible();
+  await expect(page.getByRole('progressbar', { name: 'Loading page' })).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'Applications', exact: true })).toBeVisible();
+});
 test('registration, local verification, two forms, organizer review, gated waitlist and promotion', async ({
   browser,
 }) => {
@@ -130,9 +156,7 @@ test('registration, local verification, two forms, organizer review, gated waitl
 test('mobile event directory and private organizer boundaries', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/events');
-  await expect(
-    page.getByRole('heading', { name: 'Your next great idea starts here.' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Upcoming events' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: 'test-results/events-mobile.png', fullPage: true });
   await login(page, 'applicant@example.com');
@@ -227,7 +251,7 @@ test('organizers create and publish a new event, offer both types, and assign a 
   const reviewer = await reviewerContext.newPage();
   await login(reviewer, 'reviewer@example.com');
   await reviewer.goto(`/organizer/${slug}`);
-  await expect(reviewer.getByRole('heading', { name: 'Meet your next community.' })).toBeVisible();
+  await expect(reviewer.getByRole('heading', { name: 'Applications', exact: true })).toBeVisible();
   await reviewer.goto(`/organizer/${slug}/settings`);
   await expect(reviewer.locator('main')).toContainText('permission');
   await context.close();

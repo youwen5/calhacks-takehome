@@ -1,5 +1,6 @@
 <script lang="ts">
   import '../app.css';
+  import LoadingBar from '$lib/components/LoadingBar.svelte';
   import { page } from '$app/state';
   import { authClient } from '$lib/auth-client';
   import { onMount } from 'svelte';
@@ -21,20 +22,16 @@
 </script>
 
 <svelte:head
-  ><title>Cal Hacks Portal</title><meta
+  ><title>Colmena</title><meta
     name="description"
-    content="Your next great idea starts here. Apply to hypothetical Cal Hacks events as a hacker or mentor."
+    content="Apply to Cal Hacks events as a hacker or mentor."
   /></svelte:head
 >
 <a href="#main" class="button skip">Skip to content</a>
+<LoadingBar />
 <div class="shell">
   <aside>
-    <a class="brand" href="/events"
-      ><img src="/favicon.png" alt="Cal Hacks" /><span
-        >cal hacks<small>THE APPLICATION PORTAL</small></span
-      ></a
-    >
-    <div class="nav-label">YOUR NEXT CHAPTER</div>
+    <a class="brand" href="/events"><img src="/favicon.png" alt="" /><span>Colmena</span></a>
     <nav aria-label="Main navigation">
       <a href="/events" class:current={page.url.pathname.startsWith('/events')}
         ><span aria-hidden="true">◈</span> Explore events</a
@@ -45,11 +42,6 @@
           ><span aria-hidden="true">▤</span> Organizer workspace</a
         >{/if}
     </nav>
-    <div class="sidebar-note">
-      <span class="spark" aria-hidden="true">✳</span>
-      <p>Good things happen<br />when we build together.</p>
-      <small>A hypothetical Cal Hacks<br />take-home project.</small>
-    </div>
     <div class="identity">
       {#if data.user}<strong>{data.user.name}</strong><small>{data.user.email}</small><button
           disabled={!ready}
@@ -61,13 +53,8 @@
     </div>
   </aside>
   <div class="workspace">
-    <header>
-      <span>Cal Hacks <span class="muted">/ Portal</span></span><span class="live"
-        ><span aria-hidden="true">●</span> A place for possibility</span
-      >
-    </header>
     <main id="main">{@render children()}</main>
-    <footer>Built for the people who build. <span>Cal Hacks · Demo events</span></footer>
+    <footer>Hypothetical Cal Hacks events</footer>
   </div>
 </div>
 
@@ -101,17 +88,8 @@
     height: 42px;
     border-radius: 12px;
   }
-  .brand small {
-    font-size: 0.52rem;
-    letter-spacing: 0.14em;
-    margin-top: 0.15rem;
-  }
-  .nav-label {
-    margin: 3rem 0.6rem 1rem;
-    font-size: 0.6rem;
-    letter-spacing: 0.16em;
-    color: #7b8b7a;
-    font-weight: 700;
+  nav {
+    margin-top: 2rem;
   }
   nav a {
     display: flex;
@@ -127,22 +105,8 @@
     background: #e0e8d6;
     color: #244b31;
   }
-  .sidebar-note {
-    margin-top: auto;
-    padding: 2rem 0.6rem;
-  }
-  .sidebar-note p {
-    font-size: 0.92rem;
-    line-height: 1.5;
-    font-weight: 600;
-  }
-  .spark {
-    display: block;
-    font-size: 3rem;
-    color: #859c58;
-    margin-bottom: 0.5rem;
-  }
   .identity {
+    margin-top: auto;
     border-top: 1px solid #d5dfcf;
     padding-top: 1.2rem;
     display: grid;
@@ -154,22 +118,6 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-  }
-  header {
-    padding: 1.1rem 3rem;
-    border-bottom: 1px solid #e1e6dc;
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.75rem;
-    font-weight: 600;
-    background: #fafbf7;
-  }
-  .live {
-    color: #6b7b58;
-  }
-  .live span {
-    color: #87a457;
-    margin-right: 0.4rem;
   }
   main {
     padding: 3rem;
@@ -203,10 +151,6 @@
       width: 32px;
       height: 32px;
     }
-    .nav-label,
-    .sidebar-note {
-      display: none;
-    }
     nav {
       display: flex;
       gap: 0.4rem;
@@ -233,12 +177,8 @@
     main {
       padding: 1.7rem 1rem;
     }
-    header,
     footer {
       padding: 1rem;
-    }
-    .live {
-      display: none;
     }
   }
 </style>

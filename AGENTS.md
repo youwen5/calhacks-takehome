@@ -61,6 +61,10 @@ and locally verify artifacts only. Never describe local smoke tests as deploymen
 
 ## Reference reuse
 
+Use Colmena as the application wordmark and page-title suffix. Cal Hacks remains
+the organization and event brand. Prefer direct headings and useful explanatory
+copy over marketing heroes, taglines, and decorative title/subtitle pairs.
+
 Use Cal Hacks branding throughout the product: page titles, navigation, metadata,
 forms, emails, and event copy. Replace SB Hacks logos, Storke product naming, and
 organization-specific links/configuration when borrowing reference code. Preserve

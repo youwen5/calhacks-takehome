@@ -4,9 +4,8 @@
   let { data, form } = $props();
 </script>
 
-<svelte:head><title>Organizer workspace · Cal Hacks</title></svelte:head>
+<svelte:head><title>Organizer workspace · Colmena</title></svelte:head>
 <div class="page-head">
-  <p class="eyebrow">BEHIND EVERY GREAT WEEKEND</p>
   <h1>Organizer workspace</h1>
   <p class="muted">A focused place to welcome the next community of builders.</p>
 </div>

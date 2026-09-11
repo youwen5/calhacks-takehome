@@ -9,10 +9,9 @@
     }).format(n);
 </script>
 
-<svelte:head><title>{data.event.name} · Cal Hacks</title></svelte:head>
+<svelte:head><title>{data.event.name} · Colmena</title></svelte:head>
 <a href="/events" class="muted">← All events</a>
 <div class="page-head" style="margin-top:2rem">
-  <p class="eyebrow">HYPOTHETICAL CAL HACKS EVENT</p>
   <h1>{data.event.name}</h1>
   <p>{data.event.description}</p>
   <div class="row">
@@ -35,7 +34,7 @@
     >All dates shown in {data.event.timezone}. Decisions appear here after organizer release.</small
   >
 </div>
-<h2>How will you be part of it?</h2>
+<h2>Applications</h2>
 <p class="muted">
   Choose an application below. You can apply to more than one type; each is reviewed separately.
 </p>
@@ -44,9 +43,6 @@
       data.applications.find((a) => a.type === offered.type)?.application}
     <article class="panel">
       <div class="row spread">
-        <p class="eyebrow">
-          {offered.type === 'hacker' ? 'BRING YOUR CURIOSITY' : 'SHARE WHAT YOU KNOW'}
-        </p>
         {#if app}<span class="badge {app.status}">{app.status}</span>{/if}
       </div>
       <h2>{definition.label}</h2>

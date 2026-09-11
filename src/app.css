@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import 'tailwindcss' source('./');
 @theme {
   --font-sans: 'Inter', 'Avenir Next', 'Segoe UI', sans-serif;
 }
@@ -92,6 +92,7 @@ h2,
 h3,
 p {
   margin-top: 0;
+  margin-bottom: 0.85rem;
 }
 h1 {
   font-size: clamp(2rem, 4vw, 3rem);
@@ -136,6 +137,13 @@ small,
   background: white;
   border-radius: 14px;
   padding: 1.6rem;
+}
+.panel > :last-child,
+.page-head > :last-child,
+.row > h1,
+.row > h2,
+.row > p {
+  margin-bottom: 0;
 }
 .stack {
   display: grid;

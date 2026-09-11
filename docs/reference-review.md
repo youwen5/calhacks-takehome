@@ -48,3 +48,7 @@ and should not be repurposed as applicant grades.
   deployment-specific policy, not an appropriate policy to copy into this project.
 
 No reference application files were changed and no production data was accessed.
+
+The Colmena loading bar reimplements `src/lib/components/loading-bar.svelte` from
+Storke: a 200ms delay, fixed top bar, and two-second progress animation. It uses
+SvelteKit navigation state with timer cleanup and adds reduced-motion styling.

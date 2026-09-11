@@ -16,6 +16,11 @@ Copy `.env.example` to `.env` to change defaults. `pnpm dev`, `db:migrate`, `db:
 `db:backup`, and `admin:grant` load it through Node's optional env-file support.
 Exported environment values take precedence. Keep `BETTER_AUTH_URL` consistent with
 the hostname you use in the browser (the default is `http://localhost:5173`).
+In development, visits through another loopback hostname on the same port redirect
+to that configured origin before showing a login form. Better Auth matches the
+origin exactly; without this redirect, using `127.0.0.1` with a `localhost` setting
+would make authentication endpoints return 404. Custom hostnames still require an
+explicit `BETTER_AUTH_URL`; production origin checks remain unchanged.
 
 Explicit `MAIL_MODE=ses` enables live sending locally. An SES error is returned as
 a failure; it does not silently switch to the outbox. Production rejects outbox

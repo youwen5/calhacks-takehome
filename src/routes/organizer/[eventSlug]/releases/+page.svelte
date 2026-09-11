@@ -3,10 +3,10 @@
   let { data, form } = $props();
 </script>
 
-<svelte:head><title>Decision releases · Cal Hacks</title></svelte:head>
+<svelte:head><title>Decision releases · Colmena</title></svelte:head>
 <div class="page-head">
   <p class="eyebrow">{data.event.name}</p>
-  <h1>Ready when you are.</h1>
+  <h1>Decision releases</h1>
   <p class="muted">
     Select prepared decisions to create an exact release preview. Nothing becomes visible until you
     publish it.

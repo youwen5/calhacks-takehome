@@ -1,4 +1,4 @@
-import { building } from '$app/environment';
+import { building, dev } from '$app/environment';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import type { Handle, ServerInit } from '@sveltejs/kit';
 import { getAuth } from '$lib/server/auth';
@@ -8,6 +8,26 @@ export const init: ServerInit = () => {
 };
 export const handle: Handle = async ({ event, resolve }) => {
   if (building) return resolve(event);
+  // Better Auth's SvelteKit handler matches the configured origin exactly.
+  // Canonicalize loopback browser visits before rendering a form that cannot log in.
+  if (dev && (event.request.method === 'GET' || event.request.method === 'HEAD')) {
+    const canonical = new URL(process.env.BETTER_AUTH_URL || 'http://localhost:5173');
+    const loopback = new Set(['localhost', '127.0.0.1', '[::1]']);
+    if (
+      loopback.has(event.url.hostname) &&
+      loopback.has(canonical.hostname) &&
+      event.url.port === canonical.port &&
+      event.url.origin !== canonical.origin
+    ) {
+      return new Response(null, {
+        status: 307,
+        headers: {
+          Location: `${canonical.origin}${event.url.pathname}${event.url.search}`,
+          'Cache-Control': 'no-store',
+        },
+      });
+    }
+  }
   const length = Number(event.request.headers.get('content-length') || 0);
   if (length > 65_536) return new Response('Request too large.', { status: 413 });
   const auth = getAuth();

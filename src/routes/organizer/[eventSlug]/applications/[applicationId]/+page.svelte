@@ -23,7 +23,7 @@
   });
 </script>
 
-<svelte:head><title>Review {data.application.name} · Cal Hacks</title></svelte:head>
+<svelte:head><title>Review {data.application.name} · Colmena</title></svelte:head>
 <svelte:window
   onbeforeunload={(e) => {
     if (dirty) {

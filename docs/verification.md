@@ -1,5 +1,26 @@
 # Implementation verification
 
+## September 11 UI and local sign-in update
+
+Colmena replaces the shell wordmark and page-title suffix. The event-directory hero
+and decorative taglines were removed, headings simplified, and explicit paragraph
+and card spacing added. The delayed navigation bar follows Storke's behavior and
+supports reduced motion.
+
+Local browser visits through a loopback alias redirect to the configured auth
+origin; production origin enforcement is unchanged. Vite ignores generated data,
+test artifacts, and documentation, and Tailwind scans only `src`, preventing unrelated
+file writes from clearing an in-progress form through a development reload.
+
+Verification: six Chromium flows passed, including the new loopback redirect,
+runtime-write/input-preservation, and delayed-navigation checks. All three actual
+local demo accounts also signed in successfully through the browser. The 24
+database/auth tests passed, type checks reported zero errors/warnings, and the
+production application build passed. Desktop and 390px mobile layouts were inspected.
+The container image was not rebuilt for this UI update; the image below is historical.
+
+## Initial implementation baseline
+
 Verified locally on September 10, 2026, on x86_64 Linux/NixOS. This record describes
 executed checks, not only the intended design. Production deployment is explicitly
 excluded from the current task.
@@ -17,9 +38,8 @@ excluded from the current task.
 | `nix build .#docker-image -o result-image`              | Built the application and OCI image, including sandboxed type checks, domain tests, and the production SvelteKit build               |
 | `podman load -i result-image` and `pnpm test:container` | Passed fresh startup, container replacement, online backup, restoration, migration-failure shutdown, and production outbox rejection |
 
-The tested runtime image is `/nix/store/01blfr38ynbzwsa1wg8hp49m61q7vjdm-calhacks-portal.tar.gz`.
-Subsequent changes in this verification pass concern documentation and test coverage;
-the runtime source and migration in that image are unchanged.
+The September 10 runtime image is `/nix/store/01blfr38ynbzwsa1wg8hp49m61q7vjdm-calhacks-portal.tar.gz`.
+This is the initial implementation baseline, not an image of subsequent UI changes.
 
 ## Requirement evidence
 

@@ -41,7 +41,7 @@
   }
 </script>
 
-<svelte:head><title>{definition.label} application · Cal Hacks</title></svelte:head>
+<svelte:head><title>{definition.label} application · Colmena</title></svelte:head>
 <svelte:window
   onbeforeunload={(e) => {
     if (dirty) {
@@ -52,7 +52,6 @@
 />
 <a class="muted" href="/events/{data.event.slug}">← {data.event.name}</a>
 <div class="page-head" style="margin-top:2rem">
-  <p class="eyebrow">YOUR PLACE IN THE WEEKEND</p>
   <h1>{definition.label} application</h1>
   <p class="muted">{definition.description}</p>
   <span class="badge {data.application?.status ?? 'draft'}"

@@ -15,7 +15,7 @@
 <svelte:head><title>Event settings · {data.event.name}</title></svelte:head>
 <div class="page-head">
   <p class="eyebrow">{data.event.name}</p>
-  <h1>Set the stage.</h1>
+  <h1>Event settings</h1>
   <p class="muted">Manage the event, application types, and the people organizing it.</p>
 </div>
 <ActionNotice {form} />
