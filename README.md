@@ -1,4 +1,4 @@
-# Cal Hacks Portal
+# Colmena · Cal Hacks Portal
 
 A hackathon application portal for multiple events, with independent hacker and
 mentor applications, organizer grading, waitlists, and explicit decision release.
@@ -98,7 +98,8 @@ transaction before checking current permissions, versions, and deadlines.
 - [Three-minute demo script](docs/demo.md)
 - [Branding provenance](docs/branding.md)
 
-Storke supplied organizational and layout inspiration. Its production files and data
-were not modified or copied, and its judging subsystem was not reused. See the
+Storke supplies the shared visual design, color tokens, and authentication artwork.
+Its production repository remains unchanged; no production data or judging code
+was reused. See the
 [reference review](docs/reference-review.md). **Production deployment is not performed
 as part of this implementation**, per the user's instruction.

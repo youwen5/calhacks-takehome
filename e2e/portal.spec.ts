@@ -30,6 +30,49 @@ function emailLink(email: string, subject: string) {
     .map((f) => JSON.parse(readFileSync(`${directory}/${f}`, 'utf8')))
     .find((m) => m.to === email && m.subject.includes(subject))?.url as string;
 }
+for (const reducedMotion of ['no-preference', 'reduce'] as const) {
+  test(`page content flies between events and login; motion preference: ${reducedMotion}`, async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion });
+    await page.goto('/events');
+    await expect(page.getByRole('button', { name: 'Toggle theme' })).toBeEnabled();
+    const motion = await page.evaluate(async () => {
+      const started = performance.now();
+      let exit = false,
+        entrance = false;
+      document.querySelector<HTMLAnchorElement>('a[href="/login"]')!.click();
+      while (performance.now() - started < 800) {
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+        const main = document.querySelector('main')!;
+        const matrix = new DOMMatrix(getComputedStyle(main).transform);
+        exit ||= matrix.m42 < -0.1;
+        entrance ||= matrix.m41 < -0.1;
+      }
+      return { exit, entrance };
+    });
+    expect(motion).toEqual({
+      exit: reducedMotion === 'no-preference',
+      entrance: reducedMotion === 'no-preference',
+    });
+    await expect(page.getByRole('heading', { name: 'Log In to Cal Hacks' })).toBeVisible();
+  });
+}
+test('Storke typography, theme persistence, and responsive auth layout', async ({ page }) => {
+  await page.goto('/register');
+  await page.evaluate(() => document.fonts.ready);
+  expect(await page.evaluate(() => getComputedStyle(document.body).fontFamily)).toContain(
+    'Source Serif 4',
+  );
+  await expect(page.getByLabel('First name')).toBeEnabled();
+  await page.getByRole('button', { name: 'Toggle theme' }).click();
+  const theme = await page.locator('html').getAttribute('data-theme');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', theme!);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await expect(page.locator('.auth-art')).toBeHidden();
+});
 test('loopback visits use the auth origin and slow navigation shows the loading bar', async ({
   page,
 }) => {
@@ -64,7 +107,8 @@ test('registration, local verification, two forms, organizer review, gated waitl
   const email = `browser-${Date.now()}@example.com`,
     name = `Browser Builder ${Date.now()}`;
   await applicant.goto('/register');
-  await applicant.getByLabel('Your name').fill(name);
+  await applicant.getByLabel('First name').fill('Browser');
+  await applicant.getByLabel('Last name').fill(name.slice('Browser '.length));
   await applicant.getByLabel('Email address').fill(email);
   await applicant.getByLabel('Password', { exact: true }).fill('Browser-demo-password!');
   await applicant.getByRole('button', { name: 'Create account' }).click();
@@ -169,7 +213,8 @@ test('password reset through local outbox', async ({ browser }) => {
   const page = await context.newPage();
   const email = `reset-${Date.now()}@example.com`;
   await page.goto('/register');
-  await page.getByLabel('Your name').fill('Reset Tester');
+  await page.getByLabel('First name').fill('Reset');
+  await page.getByLabel('Last name').fill('Tester');
   await page.getByLabel('Email address').fill(email);
   await page.getByLabel('Password', { exact: true }).fill('Original-demo-password!');
   await page.getByRole('button', { name: 'Create account' }).click();

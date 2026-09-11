@@ -45,7 +45,7 @@
 <ActionNotice {form} />
 <div class="grid">
   <section class="panel">
-    <h2>Their story</h2>
+    <h2>Application responses</h2>
     <h3>Introduction</h3>
     <p class="prose">{data.application.introduction}</p>
     {#if data.application.link}<p>
@@ -59,7 +59,7 @@
   </section>
   <div class="stack">
     <section class="panel">
-      <h2>A thoughtful review</h2>
+      <h2>Review</h2>
       <p class="muted">Score the evidence in the application. Grades stay internal.</p>
       {#if !data.review?.completedAt}<form method="POST" action="?/claim">
           <input type="hidden" name="token" value={data.claim?.token ?? ''} />
@@ -166,3 +166,13 @@
         ><span class="hint">{revision.reason || 'Initial decision'}</span>
       </p>{/each}
   </section>{/if}
+
+<style>
+  .prose {
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 12px;
+    background: var(--color-background);
+    font-size: 14px;
+  }
+</style>

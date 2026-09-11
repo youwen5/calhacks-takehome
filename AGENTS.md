@@ -64,6 +64,10 @@ and locally verify artifacts only. Never describe local smoke tests as deploymen
 Use Colmena as the application wordmark and page-title suffix. Cal Hacks remains
 the organization and event brand. Prefer direct headings and useful explanatory
 copy over marketing heroes, taglines, and decorative title/subtitle pairs.
+Storke's design is the baseline, not loose inspiration: use its Source Serif 4 font,
+stone light/dark colors, split auth layout, compact controls, sidebar, and page motion.
+Heavily mimic comparable Storke pages; diverge only to support different features.
+Record reused assets/styles in `docs/branding.md` and `docs/reference-review.md`.
 
 Use Cal Hacks branding throughout the product: page titles, navigation, metadata,
 forms, emails, and event copy. Replace SB Hacks logos, Storke product naming, and

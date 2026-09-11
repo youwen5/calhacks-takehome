@@ -4,7 +4,20 @@
     <meta charset="utf-8" />
     <link rel="icon" type="image/png" href="%sveltekit.assets%/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#173e35" />
+    <meta name="theme-color" content="#57534e" />
+    <script>
+      try {
+        const stored = localStorage.getItem('theme');
+        document.documentElement.dataset.theme =
+          stored === 'dark' || stored === 'light'
+            ? stored
+            : matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
+      } catch {
+        document.documentElement.dataset.theme = 'light';
+      }
+    </script>
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover">

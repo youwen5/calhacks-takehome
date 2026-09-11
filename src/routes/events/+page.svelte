@@ -19,12 +19,7 @@
     <p class="muted">No events have been published yet. Check back soon.</p>
   </div>{/if}
 <div class="grid">
-  {#each data.events as event, i}<article class="panel event-card">
-      <div class="event-art" class:gold={i % 2 === 1}>
-        <span aria-hidden="true">{i % 2 ? '↗' : '✳'}</span><span class="badge"
-          >HYPOTHETICAL EVENT</span
-        >
-      </div>
+  {#each data.events as event}<article class="panel event-card">
       <div class="row spread">
         <p class="eyebrow">{date(event.startsAt, event.timezone)}</p>
         <span class="badge {event.status}">{event.status}</span>
@@ -42,35 +37,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.85rem;
-  }
-  .event-art {
-    height: 115px;
-    background: #dbe7df;
-    border-radius: 9px;
-    position: relative;
-    overflow: hidden;
-    flex-shrink: 0;
-  }
-  .event-art > span:first-child {
-    position: absolute;
-    font-size: 150px;
-    color: #749c84;
-    top: -55px;
-    right: 25px;
-  }
-  .event-art .badge {
-    position: absolute;
-    left: 1rem;
-    bottom: 1rem;
-    font-size: 0.55rem;
-    letter-spacing: 0.12em;
-    background: #ffffffbd;
-  }
-  .event-art.gold {
-    background: #f0e8ca;
-  }
-  .event-art.gold > span:first-child {
-    color: #b69b46;
   }
   .event-card .eyebrow {
     margin: 0;

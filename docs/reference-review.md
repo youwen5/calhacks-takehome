@@ -49,6 +49,24 @@ and should not be repurposed as applicant grades.
 
 No reference application files were changed and no production data was accessed.
 
-The Colmena loading bar reimplements `src/lib/components/loading-bar.svelte` from
-Storke: a 200ms delay, fixed top bar, and two-second progress animation. It uses
-SvelteKit navigation state with timer cleanup and adds reduced-motion styling.
+## Visual reuse
+
+The user's clarified instruction is to heavily mimic Storke wherever pages overlap.
+`src/app.css` adopts its Source Serif 4 typography and stone light/dark color tokens.
+`static/auth-splash.svg` copies Storke's `src/lib/assets/splash.svg` unchanged.
+The auth layout follows `(auth)/+layout.svelte`: one-third illustration, two-thirds
+form pane, a centered 448px form, and illustration hidden below 1024px. Login and
+registration follow the corresponding Storke pages, including outlined alternate
+actions, first/last name fields, and the functional remember-me checkbox.
+
+The sidebar, mobile drawer, theme control, grouped application sections, boxed
+review responses, and event timeline follow their Storke equivalents. Multi-event
+selection, per-type applications, and decision releases retain their distinct
+workflows. The provided Cal Hacks logo and Colmena name replace Storke branding.
+
+Storke has two separate animations. `LoadingBar.svelte` matches its 150ms fly-in/out
+and two-second progress bar, but starts without the original 200ms threshold.
+The layout separately animates page content: 150ms upward exit, then 300ms entrance
+from the left. It uses the Web Animations API through SvelteKit `onNavigate` to
+sequence the page swap without mounting duplicate copies of forms. Cached routes
+also animate. Reduced-motion mode skips movement and the page-swap delay.

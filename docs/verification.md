@@ -1,11 +1,34 @@
 # Implementation verification
 
+## September 11 Storke design alignment
+
+The shared UI now follows Storke directly: bundled Source Serif 4, its stone
+light/dark tokens and auth illustration, the split-screen login/register layout,
+40px controls, first/last name registration, functional remember-me option,
+sidebar/mobile drawer, grouped application sections, boxed review responses,
+and event timeline. The Colmena wordmark and Cal Hacks event branding remain.
+
+The page content now animates separately from the loading bar. SvelteKit waits for
+the 150ms outgoing content animation before swapping pages, then the new content
+enters over 300ms. There is no 200ms loading-bar threshold. Reduced-motion mode
+skips page movement and the artificial page-swap wait. This supersedes the earlier
+loading-bar-only approach below.
+
+Executed checks: nine Chromium tests passed, including content motion in both
+preferences, font/theme persistence, responsive auth, and the existing complete
+application/review/release flows. All 24 database/auth tests, type checking, and
+the production application build passed. Browser inspection confirmed Source Serif 4
+loaded, the exact light background `rgb(245,245,244)` and text `rgb(28,25,23)`,
+working local manager sign-in, and no registration overflow at 390px. Login,
+registration, organizer queue, light/dark, and mobile screenshots were inspected.
+The historical container image has not been rebuilt for these UI changes.
+
 ## September 11 UI and local sign-in update
 
 Colmena replaces the shell wordmark and page-title suffix. The event-directory hero
 and decorative taglines were removed, headings simplified, and explicit paragraph
-and card spacing added. The delayed navigation bar follows Storke's behavior and
-supports reduced motion.
+and card spacing added. The initial follow-up animated only the loading bar;
+the Storke alignment above replaces that with actual page-content transitions.
 
 Local browser visits through a loopback alias redirect to the configured auth
 origin; production origin enforcement is unchanged. Vite ignores generated data,

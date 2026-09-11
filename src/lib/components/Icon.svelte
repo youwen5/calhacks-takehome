@@ -1,0 +1,35 @@
+<script lang="ts">
+  let {
+    name,
+  }: { name: 'calendar' | 'files' | 'menu' | 'close' | 'moon' | 'sun' | 'logout' | 'user' } =
+    $props();
+</script>
+
+<svg
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="1.7"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+  aria-hidden="true"
+>
+  {#if name === 'calendar'}<rect x="3" y="5" width="18" height="16" rx="2" /><path
+      d="M16 3v4M8 3v4M3 11h18M8 15h.01M12 15h.01M16 15h.01M8 18h.01M12 18h.01"
+    />
+  {:else if name === 'files'}<path
+      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z M14 2v6h6M8 13h8M8 17h6"
+    />
+  {:else if name === 'menu'}<path d="M4 6h16M4 12h16M4 18h16" />
+  {:else if name === 'close'}<path d="m6 6 12 12M6 18 18 6" />
+  {:else if name === 'moon'}<path d="M21 13a9 9 0 0 1-10-10 9 9 0 1 0 10 10Z" />
+  {:else if name === 'sun'}<circle cx="12" cy="12" r="4" /><path
+      d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M5 19l1.5-1.5M17.5 6.5 19 5"
+    />
+  {:else if name === 'logout'}<path
+      d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4M10 12h11m-4-4 4 4-4 4"
+    />
+  {:else}<circle cx="12" cy="8" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" />{/if}
+</svg>

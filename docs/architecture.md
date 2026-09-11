@@ -200,11 +200,13 @@ and denial of cross-event reads/writes using real database integration tests.
 
 ## UI direction
 
-Reuse Storke's sidebar portal structure, clear page headings, grouped forms, and
-status indicators. Create cohesive project branding instead of inheriting SB Hacks
-assets and event text. Use Cal Hacks branding and the user-provided logo saved in
-`static/favicon.png`; see `branding.md`. The applicant dashboard should explain the next action;
-the organizer view should prioritize filtering, review progress, and readable answers.
+Heavily mimic Storke on comparable pages: Source Serif 4, stone light/dark colors,
+split-screen auth, compact controls, sidebar/mobile drawer, grouped forms, review
+answers, and content transitions. Keep Colmena as the wordmark and Cal Hacks as the
+organization. Reuse the original decorative auth artwork and the provided Cal Hacks
+logo; provenance is in `branding.md`. Differing features—multiple events, separate
+application types, claims, and decision releases—use the same visual conventions.
+The explore page remains a simple list without its removed marketing hero.
 
 ## Deliberate tradeoffs
 

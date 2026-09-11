@@ -1,13 +1,128 @@
 @import 'tailwindcss' source('./');
+
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('/fonts/SourceSerif4.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: italic;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('/fonts/SourceSerif4-Italic.ttf') format('truetype');
+}
 @theme {
-  --font-sans: 'Inter', 'Avenir Next', 'Segoe UI', sans-serif;
+  --font-serif: 'Source Serif 4', serif;
+
+  /* Tailwind Stone Colors */
+  --color-stone-50: #fafaf9;
+  --color-stone-100: #f5f5f4;
+  --color-stone-200: #e7e5e4;
+  --color-stone-300: #d6d3d1;
+  --color-stone-400: #a8a29e;
+  --color-stone-500: #78716c;
+  --color-stone-600: #57534e;
+  --color-stone-700: #44403c;
+  --color-stone-800: #292524;
+  --color-stone-900: #1c1917;
+  --color-stone-950: #0c0a09;
+
+  /* Light Mode Colors */
+  --color-background: var(--color-stone-100);
+  --color-foreground: var(--color-stone-900);
+  --color-primary: var(--color-stone-600);
+  --color-primary-foreground: var(--color-stone-50);
+
+  --color-card: var(--color-stone-50);
+  --color-card-foreground: var(--color-stone-900);
+
+  --color-muted: var(--color-stone-200);
+  --color-muted-foreground: var(--color-stone-600);
+
+  --color-accent: var(--color-stone-200);
+  --color-accent-foreground: var(--color-stone-800);
+
+  --color-border: var(--color-stone-300);
+
+  --color-link: var(--color-stone-700);
+
+  --color-input: var(--color-stone-200);
+  --color-input-ring: var(--color-stone-400);
+
+  --color-ring: var(--color-stone-400);
+
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #fff;
+
+  --color-success: #16a34a;
+  --color-success-foreground: #fff;
 }
-:root {
-  font-family: var(--font-sans);
-  color: #1c302b;
-  background: #f6f7f2;
-  font-synthesis: none;
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@layer base {
+  [data-theme='dark'] {
+    /* Dark Mode Colors */
+    --color-background: var(--color-stone-900);
+    --color-foreground: var(--color-stone-100);
+    --color-primary: var(--color-stone-400);
+    --color-primary-foreground: var(--color-stone-950);
+
+    --color-card: var(--color-stone-800);
+    --color-card-foreground: var(--color-stone-100);
+
+    --color-muted: var(--color-stone-800);
+    --color-muted-foreground: var(--color-stone-400);
+
+    --color-accent: var(--color-stone-700);
+    --color-accent-foreground: var(--color-stone-200);
+
+    --color-border: var(--color-stone-700);
+
+    --color-link: var(--color-stone-300);
+
+    --color-input: var(--color-stone-800);
+    --color-input-ring: var(--color-stone-400);
+
+    --color-ring: var(--color-stone-400);
+
+    --color-destructive: #dc2626;
+    --color-destructive-foreground: #fff;
+
+    --color-success: #16a34a;
+    --color-success-foreground: #fff;
+  }
 }
+
+@layer utility {
+  .smallcaps {
+    font-variant: small-caps;
+  }
+  .all-smallcaps {
+    font-variant: all-small-caps;
+  }
+  .no-smallcaps {
+    font-variant: none;
+  }
+}
+
+html {
+  overflow-x: hidden;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-serif);
+}
+
+body {
+  min-height: 100vh;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-serif);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -27,11 +142,13 @@ button,
 .button {
   cursor: pointer;
   border: 0;
-  border-radius: 9px;
-  padding: 0.75rem 1.1rem;
-  font-weight: 650;
-  background: #174e3c;
-  color: white;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  min-height: 40px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -40,7 +157,7 @@ button,
 }
 button:hover,
 .button:hover {
-  background: #24654e;
+  background: color-mix(in srgb, var(--color-primary) 70%, transparent);
 }
 button:disabled {
   cursor: not-allowed;
@@ -48,15 +165,15 @@ button:disabled {
 }
 button.secondary,
 .button.secondary {
-  background: #edf0e8;
-  color: #234d3d;
-  border: 1px solid #d5dece;
+  background: transparent;
+  color: var(--color-foreground);
+  border: 1px solid var(--color-border);
 }
 button.danger {
-  background: #963a35;
+  background: var(--color-destructive);
 }
 :focus-visible {
-  outline: 3px solid #ab872a;
+  outline: 3px solid var(--color-ring);
   outline-offset: 3px;
 }
 input:not([type='checkbox']),
@@ -64,12 +181,14 @@ select,
 textarea {
   display: block;
   width: 100%;
-  border: 1px solid #cbd5cd;
+  border: 1px solid var(--color-input);
   border-radius: 8px;
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  min-height: 40px;
+  font-size: 0.875rem;
   margin-top: 0.4rem;
-  color: #18372a;
-  background: white;
+  color: var(--color-foreground);
+  background: var(--color-card);
 }
 textarea {
   min-height: 130px;
@@ -83,7 +202,7 @@ label {
   margin: 1.1rem 0;
 }
 input[type='checkbox'] {
-  accent-color: #174e3c;
+  accent-color: var(--color-primary);
   width: 17px;
   height: 17px;
 }
@@ -95,26 +214,26 @@ p {
   margin-bottom: 0.85rem;
 }
 h1 {
-  font-size: clamp(2rem, 4vw, 3rem);
-  letter-spacing: -0.055em;
-  line-height: 1.1;
-  font-weight: 650;
+  font-size: 1.875rem;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  font-weight: 600;
 }
 h2 {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   letter-spacing: -0.03em;
-  font-weight: 650;
+  font-weight: 600;
 }
 h3 {
   font-size: 1rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 p {
   line-height: 1.7;
 }
 .muted,
 small {
-  color: #62746a;
+  color: var(--color-muted-foreground);
 }
 small,
 .hint {
@@ -127,16 +246,16 @@ small,
 .eyebrow {
   font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.025em;
   font-weight: 700;
-  color: #67806f;
+  color: var(--color-muted-foreground);
   margin-bottom: 1rem;
 }
 .panel {
-  border: 1px solid #dce2d8;
-  background: white;
-  border-radius: 14px;
-  padding: 1.6rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  border-radius: 8px;
+  padding: 1.5rem;
 }
 .panel > :last-child,
 .page-head > :last-child,
@@ -167,10 +286,10 @@ small,
   display: inline-block;
   border-radius: 6px;
   padding: 0.3rem 0.65rem;
-  background: #edf1e9;
-  color: #3b5a46;
+  background: var(--color-muted);
+  color: var(--color-muted-foreground);
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
   text-transform: capitalize;
 }
 .badge.accepted,
@@ -188,9 +307,9 @@ small,
 }
 .notice {
   padding: 1rem 1.2rem;
-  border: 1px solid #d6dfca;
-  border-radius: 10px;
-  background: #edf3e5;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-muted);
   line-height: 1.6;
   margin-bottom: 1.2rem;
 }
@@ -200,7 +319,7 @@ small,
   color: #842f27;
 }
 .page-head {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 .page-head p {
   max-width: 660px;
@@ -216,18 +335,18 @@ table {
 }
 th {
   font-size: 0.7rem;
-  color: #63746b;
+  color: var(--color-muted-foreground);
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
 th,
 td {
   padding: 1rem 0.75rem;
-  border-bottom: 1px solid #e6ebe2;
+  border-bottom: 1px solid var(--color-border);
   vertical-align: top;
 }
 td a {
-  font-weight: 650;
+  font-weight: 600;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
 }

@@ -10,7 +10,7 @@
 <nav
   aria-label="Event organizer navigation"
   class="row"
-  style="border-bottom:1px solid #dce2d8;padding-bottom:1rem;margin-bottom:2rem"
+  style="border-bottom:1px solid var(--color-border);padding-bottom:1rem;margin-bottom:2rem"
 >
   {#if data.role}<a class="button secondary" href="/organizer/{data.event.slug}">Applications</a
     >{/if}
