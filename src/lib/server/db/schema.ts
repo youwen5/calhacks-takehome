@@ -325,3 +325,63 @@ export const resume = sqliteTable('resume', {
   bytes: blob({ mode: 'buffer' }).notNull(),
   updatedAt: integer().notNull(),
 });
+
+export const attendance = sqliteTable(
+  'attendance',
+  {
+    eventId: text()
+      .notNull()
+      .references(() => event.id),
+    userId: text()
+      .notNull()
+      .references(() => user.id),
+    confirmedAt: integer().notNull(),
+    dietary: text().notNull().default(''),
+    checkedInAt: integer(),
+    checkerId: text().references(() => user.id),
+  },
+  (t) => [primaryKey({ columns: [t.eventId, t.userId] })],
+);
+export const mealTicket = sqliteTable(
+  'meal_ticket',
+  {
+    eventId: text().notNull(),
+    userId: text().notNull(),
+    meal: text({ enum: ['breakfast', 'lunch', 'dinner', 'snack'] }).notNull(),
+    usedAt: integer(),
+    checkerId: text()
+      .notNull()
+      .references(() => user.id),
+    version: integer().notNull().default(1),
+  },
+  (t) => [
+    primaryKey({ columns: [t.eventId, t.userId, t.meal] }),
+    foreignKey({
+      columns: [t.eventId, t.userId],
+      foreignColumns: [attendance.eventId, attendance.userId],
+    }),
+    check('meal_type', sql`${t.meal} in ('breakfast','lunch','dinner','snack')`),
+  ],
+);
+export const sponsor = sqliteTable('sponsor', {
+  id: text().primaryKey(),
+  eventId: text()
+    .notNull()
+    .references(() => event.id),
+  name: text().notNull(),
+  createdAt: integer().notNull(),
+});
+export const sponsorCode = sqliteTable(
+  'sponsor_code',
+  {
+    id: text().primaryKey(),
+    sponsorId: text()
+      .notNull()
+      .references(() => sponsor.id),
+    value: text().notNull(),
+    redeemedBy: text().references(() => user.id),
+    redeemedAt: integer(),
+    createdAt: integer().notNull(),
+  },
+  (t) => [uniqueIndex('one_code_per_sponsor_user').on(t.sponsorId, t.redeemedBy)],
+);

@@ -35,8 +35,9 @@ applications, deadlines, statuses, and organizer permissions. Support hacker and
 mentor application types selected from those offered by the event. Allow one
 application per account per event per type, including both types in the same event;
 organizer access is independently provisioned per event.
-Draft saving is baseline usability. Event-day logistics, meals, sponsorship,
-project judging and score normalization are outside scope. The follow-up adds PDF
+Draft saving is baseline usability. Project judging and score normalization remain
+outside scope. The follow-ups add event passes, confirmation/check-in, meals,
+sponsor codes and inventory management (see event-day.md), plus PDF
 resumes, application analytics, a reviewer leaderboard, and CSV/JSON exports.
 
 Use sourced 2025 Cal Hacks event names and descriptions with open testing dates,
@@ -67,5 +68,5 @@ validation publishes nothing; retrying a committed release returns its original 
 
 Initial waitlists are unranked and manually managed. Releases are manual batches
 of at most 500 decisions; applicants check the portal for results. Admission emails,
-scheduled releases, RSVP/capacity management, and editable completed reviews are
+scheduled releases, capacity management, and editable completed reviews are
 outside this version. Authentication verification/recovery email remains required.

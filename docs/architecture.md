@@ -136,7 +136,7 @@ for pages and APIs, rather than merely hiding fields in the UI.
 | Accepted or rejected     | A different decision, as an explicit manager correction with reason | Keeps previous result until next release |
 
 Provide a waitlist filter and manager action to prepare promotion or rejection.
-Waitlists are unranked initially; no automatic promotion, capacity enforcement, RSVP,
+Waitlists are unranked initially; no automatic promotion, capacity enforcement,
 or acceptance expiry is implied. A promotion can be released individually or with
 another batch. Release retries must be idempotent and decision history append-only.
 Do not send notifications about staged decisions. Portal publication is the source
@@ -328,7 +328,7 @@ bounded request sizes and rate limits. Render essays/notes as text; profile link
 allow HTTP(S) only. No public demo outbox or seeded platform-admin password.
 
 Use indexed event/type/status lists and bounded pagination. Automatic
-promotions, ranking, RSVP, scheduled release, and admission emails are deferred.
+promotions, ranking, scheduled release, and admission emails are deferred.
 Verify representative seeded-data performance before claiming scale.
 
 ### Public event schedule and layout
@@ -383,7 +383,7 @@ Application analytics show draft/submitted/reviewed counts, published statuses,
 type distribution, submission dates in the event timezone, top 20 organizations,
 and completed score totals. Draft answers stay private; the acting organizer's
 application is excluded from score aggregates. Fields not collected (demographics,
-RSVP/check-in, graduation years) have no invented chart values.
+graduation years) have no invented chart values.
 
 The reviewer leaderboard counts completed reviews, independently of release.
 Filters cover all time, the trailing seven days, and today in the event timezone.
@@ -392,7 +392,7 @@ The application reviewer remains credited after a manager promotes a waitlist en
 Current event members can view reports; platform-wide admin status alone is not
 sufficient. Manager-only data warehouse exports participants associated with this
 event, submitted applications, and currently accepted applications in CSV or JSON.
-Accepted is not labeled confirmed attendance: this portal has no RSVP workflow.
+Accepted remains distinct from confirmed attendance; event-day confirmation is stored separately.
 Exports omit auth secrets, private draft responses, unpublished decisions, grades,
 and PDF bytes (only the resume filename is included). CSV cells neutralize formula
 prefixes and escape commas, quotes, and newlines. Exports are recorded in the audit
@@ -423,3 +423,11 @@ Event creation remains administrator-only, behind a Create event button in the
 organizer workspace. The form opens on demand and reopens after server validation
 errors. It has no sidebar entry. Sidebar links keep a consistent vertical gap and
 do not shrink; the navigation area scrolls independently on shorter screens.
+
+### Event-day expansion
+
+The follow-up supersedes earlier event-day/RSVP deferrals. See [event-day.md](event-day.md)
+for the data model, transaction rules, Storke parity, deliberate differences,
+credential-free setup, and walkthrough. Manage events replaces Organizer workspace
+and sits at the bottom of the sidebar. Empty-event deletion is administrator-only;
+archive preserves populated events.

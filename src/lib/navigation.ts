@@ -8,6 +8,16 @@ export const destinations = [
     path: 'applications',
     icon: 'files',
   },
+  { key: 'pass', label: 'Event pass & meals', scope: 'applicant', path: 'check-in', icon: 'qr' },
+  { key: 'codes', label: 'Sponsor codes', scope: 'applicant', path: 'codes', icon: 'gift' },
+  { key: 'checkin', label: 'Check-in & meals', scope: 'team', path: 'check-in', icon: 'qr' },
+  {
+    key: 'sponsors',
+    label: 'Manage sponsor codes',
+    scope: 'manager',
+    path: 'sponsors',
+    icon: 'gift',
+  },
   { key: 'review', label: 'Applications', scope: 'team', path: '', icon: 'files' },
   {
     key: 'analytics',

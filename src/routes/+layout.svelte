@@ -45,7 +45,9 @@
         : page.url.pathname.startsWith(base + '/'))
     );
   }
-  const currentDestination = $derived(destinations.find(isCurrent) ?? destinations[0]);
+  const currentDestination = $derived(
+    destinations.find(isCurrent) ?? destinations.find((d) => d.key === 'applications')!,
+  );
   onMount(() => {
     dark = document.documentElement.dataset.theme === 'dark';
     ready = true;
@@ -148,18 +150,17 @@
           ><Icon name="calendar" />Event info</a
         >{/if}
       <div class="nav-section">Applications</div>
-      <a
-        href={navHref(destinations[0])}
-        class:current={isCurrent(destinations[0])}
-        aria-current={isCurrent(destinations[0]) ? 'page' : undefined}
-        ><Icon name="files" />My applications</a
-      >
+      {#each destinations.filter((d) => d.scope === 'applicant') as destination}
+        <a
+          href={navHref(destination)}
+          class:current={isCurrent(destination)}
+          aria-current={isCurrent(destination) ? 'page' : undefined}
+          ><Icon name={destination.icon} />{destination.label}</a
+        >
+      {/each}
       {#if organizerLinks.length || data.access.administrator}<div class="nav-section">
           Administration
         </div>
-        <a href="/organizer" class:current={page.url.pathname === '/organizer'}
-          ><Icon name="calendar" />Organizer workspace</a
-        >
         {#each organizerLinks as destination}<a
             href={navHref(destination)}
             class:current={isCurrent(destination)}
@@ -168,7 +169,18 @@
           >{/each}
       {/if}
     </nav>
-    <div class="sidebar-settings">{@render themeButton()}</div>
+    <div class="sidebar-settings">
+      {#if data.access.administrator || data.access.memberships.some((m) => m.role === 'manager')}
+        <a
+          class="nav-control"
+          class:current={page.url.pathname === '/organizer'}
+          href="/organizer"
+          aria-current={page.url.pathname === '/organizer' ? 'page' : undefined}
+          ><Icon name="calendar" />Manage events</a
+        >
+      {/if}
+      {@render themeButton()}
+    </div>
     <div class="identity">
       <div class="account">
         <span class="avatar"><Icon name="user" /></span>
@@ -259,7 +271,8 @@
   }
   aside nav a:hover,
   .nav-control:hover,
-  aside nav a.current {
+  aside nav a.current,
+  .nav-control.current {
     background: var(--color-accent);
     color: var(--color-accent-foreground);
   }
@@ -290,6 +303,11 @@
     padding-top: 16px;
     margin-bottom: 4px;
     font-weight: 600;
+  }
+  .sidebar-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
   .sidebar-settings,
   .identity {

@@ -436,6 +436,93 @@ export function portal(db: PortalDatabase, now: () => number = Date.now) {
         return slug;
       });
     },
+    managedEvents(actor: string) {
+      const isAdmin = !!db
+        .select()
+        .from(s.administrator)
+        .where(eq(s.administrator.userId, actor))
+        .get();
+      const managed = db
+        .select()
+        .from(s.membership)
+        .where(and(eq(s.membership.userId, actor), eq(s.membership.role, 'manager')))
+        .all();
+      requireThat(isAdmin || managed.length, 403, 'Event management access required.');
+      return db
+        .select({
+          event: s.event,
+          applicationCount: sql<number>`(select count(*) from application where application.eventId = ${s.event.id})`,
+        })
+        .from(s.event)
+        .where(
+          isAdmin
+            ? undefined
+            : inArray(
+                s.event.id,
+                managed.map((m) => m.eventId),
+              ),
+        )
+        .orderBy(asc(s.event.startsAt))
+        .all();
+    },
+    archiveEvent(actor: string, slug: string, version: number) {
+      return atomic((q) => {
+        const e = getEvent(q, slug);
+        const isAdmin = q
+          .select()
+          .from(s.administrator)
+          .where(eq(s.administrator.userId, actor))
+          .get();
+        if (!isAdmin) member(q, actor, e.id, true);
+        requireThat(e.version === version, 409, 'Event configuration changed. Reload.');
+        requireThat(e.status === 'published', 409, 'Only published events can be archived.');
+        q.update(s.event)
+          .set({ status: 'archived', version: version + 1 })
+          .where(eq(s.event.id, e.id))
+          .run();
+        log(q, actor, e.id, 'event_archived', {});
+      });
+    },
+    deleteEvent(actor: string, slug: string, version: number, confirmation: string) {
+      return atomic((q) => {
+        admin(q, actor);
+        const e = getEvent(q, slug);
+        requireThat(e.version === version, 409, 'Event configuration changed. Reload.');
+        requireThat(confirmation === e.slug, 400, 'Type the event slug to confirm deletion.');
+        requireThat(
+          !q
+            .select({ id: s.application.id })
+            .from(s.application)
+            .where(eq(s.application.eventId, e.id))
+            .get(),
+          409,
+          'Events with applications cannot be deleted. Archive the event instead.',
+        );
+        requireThat(
+          !q.select({ id: s.release.id }).from(s.release).where(eq(s.release.eventId, e.id)).get(),
+          409,
+          'Events with decision releases cannot be deleted.',
+        );
+        requireThat(
+          !q.select().from(s.attendance).where(eq(s.attendance.eventId, e.id)).get(),
+          409,
+          'Events with attendance records must be retained.',
+        );
+        q.delete(s.sponsorCode)
+          .where(
+            inArray(
+              s.sponsorCode.sponsorId,
+              q.select({ id: s.sponsor.id }).from(s.sponsor).where(eq(s.sponsor.eventId, e.id)),
+            ),
+          )
+          .run();
+        q.delete(s.sponsor).where(eq(s.sponsor.eventId, e.id)).run();
+        q.delete(s.offeredType).where(eq(s.offeredType.eventId, e.id)).run();
+        q.delete(s.membership).where(eq(s.membership.eventId, e.id)).run();
+        q.delete(s.audit).where(eq(s.audit.eventId, e.id)).run();
+        q.delete(s.event).where(eq(s.event.id, e.id)).run();
+      });
+    },
     configure(
       actor: string,
       slug: string,

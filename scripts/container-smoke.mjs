@@ -32,6 +32,10 @@ const persistedApplicationCheck = `
   if(row?.name!=='Synthetic Builder'||row.status!=='submitted'||row.ambition!=='Learn together')process.exit(1);
   const resume=d.prepare("SELECT filename, bytes FROM resume WHERE applicationId='smoke-application'").get();
   if(resume?.filename!=='resume.pdf'||Buffer.from(resume.bytes).toString()!=='%PDF-1.4 container resume %%EOF')process.exit(1);
+  const attendance=d.prepare("SELECT dietary,checkedInAt FROM attendance WHERE userId='smoke-user'").get();
+  if(attendance?.dietary!=='Vegetarian'||attendance.checkedInAt!==2)process.exit(1);
+  if(d.prepare("SELECT version FROM meal_ticket WHERE userId='smoke-user' AND meal='lunch'").get()?.version!==1)process.exit(1);
+  if(d.prepare("SELECT value FROM sponsor_code WHERE redeemedBy='smoke-user'").get()?.value!=='SMOKE-CODE')process.exit(1);
   if(d.prepare('PRAGMA foreign_key_check').all().length)process.exit(1);
 `;
 function start() {
@@ -79,7 +83,11 @@ try {
       "INSERT INTO event(id,slug,name,description,venue,timezone,opensAt,closesAt,startsAt,endsAt,status) VALUES('smoke-event','smoke-event','Synthetic event','Container persistence test','Demo venue','UTC',1,2,3,4,'published');"+
       "INSERT INTO offered_type(eventId,type) VALUES('smoke-event','hacker');"+
       "INSERT INTO application(id,eventId,userId,type,status,name,formVersion,rubricVersion,updatedAt,submittedAt) VALUES('smoke-application','smoke-event','smoke-user','hacker','submitted','Synthetic Builder',1,1,1,1);"+
-      "INSERT INTO hacker_answer(applicationId,interests,experience,ambition) VALUES('smoke-application','Community software','A test project','Learn together'); COMMIT;"
+      "INSERT INTO hacker_answer(applicationId,interests,experience,ambition) VALUES('smoke-application','Community software','A test project','Learn together');"+
+      "INSERT INTO attendance(eventId,userId,confirmedAt,dietary,checkedInAt,checkerId) VALUES('smoke-event','smoke-user',1,'Vegetarian',2,'smoke-user');"+
+      "INSERT INTO meal_ticket(eventId,userId,meal,usedAt,checkerId,version) VALUES('smoke-event','smoke-user','lunch',3,'smoke-user',1);"+
+      "INSERT INTO sponsor(id,eventId,name,createdAt) VALUES('smoke-sponsor','smoke-event','Synthetic sponsor',1);"+
+      "INSERT INTO sponsor_code(id,sponsorId,value,redeemedBy,redeemedAt,createdAt) VALUES('smoke-code','smoke-sponsor','SMOKE-CODE','smoke-user',3,1); COMMIT;"
     );d.prepare("INSERT INTO resume(applicationId,filename,bytes,updatedAt) VALUES('smoke-application','resume.pdf',?,1)").run(Buffer.from('%PDF-1.4 container resume %%EOF'));d.close()`,
   ]);
   run(['exec', name, 'calhacks-backup', '/data/backup.db']);
@@ -147,7 +155,7 @@ try {
   if (rejected.status === 0 || !rejected.stderr.includes('development-only'))
     throw new Error('Production outbox was not rejected.');
   console.log(
-    'Container smoke passed: migration, HTTP, application/PDF persistence, migration failure, backup restoration, production mail guard. No external network used.',
+    'Container smoke passed: migration, HTTP, application/PDF/attendance/meal/code persistence, migration failure, backup restoration, production mail guard. No external network used.',
   );
 } finally {
   run(['rm', '-f', name], true);

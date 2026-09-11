@@ -314,6 +314,14 @@ test('organizers create and publish a new event, offer both types, and assign a 
   await expect(reviewer.getByRole('heading', { name: 'Applications', exact: true })).toBeVisible();
   await reviewer.goto(`/organizer/${slug}/settings`);
   await expect(reviewer.locator('main')).toContainText('permission');
+  await page.goto('/organizer');
+  await expect(page.getByRole('heading', { name: 'Manage events', exact: true })).toBeVisible();
+  const eventCard = page.getByRole('article').filter({ hasText: 'Browser community weekend' });
+  await eventCard.getByText('Delete event', { exact: true }).click();
+  await eventCard.getByLabel('Type ' + slug + ' to confirm').fill(slug);
+  await eventCard.getByRole('button', { name: 'Permanently delete event' }).click();
+  await expect(eventCard).toHaveCount(0);
+
   await context.close();
   await reviewerContext.close();
 });
@@ -429,4 +437,85 @@ test('applicant sidebar does not expose organizer sections or arbitrary picker r
   await expect(page.getByText('No events are available for this section.')).toBeVisible();
   const invalid = await page.goto('/select-event?for=https://example.com');
   expect(invalid?.status()).toBe(400);
+});
+
+test('event pass QR, staff admission, meals and sponsor redemption work end to end', async ({
+  page,
+  browser,
+}) => {
+  test.setTimeout(120_000);
+  await login(page, 'jordan@example.com');
+  await page.goto('/events/cal-hacks-fall/check-in');
+  await page.getByLabel('Dietary restrictions (optional)').fill('Vegetarian');
+  await page.getByRole('button', { name: 'Confirm attendance', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Confirm attendance', exact: true })).toHaveCount(
+    0,
+  );
+  const qr = page.getByRole('img', { name: 'QR code for check-in and meal ticketing' });
+  await expect(qr).toBeVisible();
+  const source = await qr.getAttribute('src');
+  expect(source).toMatch(/^data:image\/png;base64,/);
+  await page.getByRole('button', { name: 'Tap to view QR code fullscreen' }).click();
+  await expect(page.getByRole('button', { name: 'Close enlarged QR code' })).toHaveClass(
+    /enlarged/,
+  );
+  await page.keyboard.press('Escape');
+  const context = await browser.newContext(),
+    staff = await context.newPage();
+  await login(staff, 'manager@example.com');
+  await staff.goto('/organizer/cal-hacks-fall/check-in');
+  await staff.getByRole('button', { name: 'Scan QR Code', exact: true }).click();
+  await staff.getByLabel('Scan a QR image').setInputFiles({
+    name: 'event-pass.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(source!.split(',')[1], 'base64'),
+  });
+  await expect(staff.getByRole('heading', { name: 'Jordan Chen', exact: true })).toBeVisible();
+  await expect(staff.getByText('Vegetarian', { exact: true })).toBeVisible();
+  await staff.getByRole('button', { name: 'Check in attendee', exact: true }).click();
+  await expect(staff.getByText('Checked In', { exact: true })).toBeVisible();
+  const lunch = staff.getByRole('button', { name: 'Toggle Lunch ticket' });
+  await lunch.click();
+  await expect(lunch).toContainText('Used');
+  await page.reload();
+  await expect(page.getByText('1/4 used', { exact: true })).toBeVisible();
+  await lunch.click();
+  await expect(lunch).toContainText('Available');
+  await staff.goto('/organizer/cal-hacks-fall/sponsors');
+  await staff.getByRole('button', { name: 'Add Sponsor', exact: true }).click();
+  await staff.getByLabel('Sponsor name').fill('Test Cloud');
+  await staff.getByRole('button', { name: 'Create sponsor', exact: true }).click();
+  await expect(staff.getByRole('heading', { name: 'Test Cloud', exact: true })).toBeVisible();
+  await staff.getByText('Add codes', { exact: true }).first().click();
+  await staff.getByLabel('Codes', { exact: true }).fill('TEST-CLOUD-ONE\nTEST-CLOUD-TWO');
+  await staff.getByRole('button', { name: 'Add codes', exact: true }).click();
+  await expect(staff.getByRole('cell', { name: 'TEST-CLOUD-ONE', exact: true })).toBeVisible();
+  await page.goto('/events/cal-hacks-fall/codes');
+  await page.getByRole('button', { name: 'Redeem code', exact: true }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByRole('dialog').locator('pre')).toContainText('TEST-CLOUD');
+  await page.getByRole('button', { name: 'Close code' }).click();
+  await expect(page.getByRole('dialog')).not.toBeVisible();
+  await page.getByRole('button', { name: 'View code', exact: true }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await staff.reload();
+  await staff.getByText('Delete sponsor', { exact: true }).click();
+  await expect(staff.getByRole('cell').filter({ hasText: 'jordan@example.com' })).toBeVisible();
+  await expect(
+    staff.getByRole('button', { name: 'Delete sponsor and unused codes' }),
+  ).toBeDisabled();
+  const downloadPromise = staff.waitForEvent('download');
+  await staff.getByRole('link', { name: 'Export CSV' }).click();
+  const download = await downloadPromise;
+  expect(readFileSync((await download.path())!, 'utf8')).toContain('jordan@example.com');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/events/cal-hacks-fall/check-in');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: '/tmp/colmena-event-pass-mobile.png', fullPage: true });
+  await staff.goto('/organizer/cal-hacks-fall/check-in');
+  await staff.getByRole('button', { name: 'Close scanner', exact: true }).click();
+  await staff.getByRole('button', { name: 'Confirmed (1)', exact: true }).click();
+  await expect(staff.getByRole('cell', { name: 'Jordan Chen', exact: true })).toBeVisible();
+  await staff.screenshot({ path: '/tmp/colmena-check-in-desktop.png', fullPage: true });
+  await context.close();
 });

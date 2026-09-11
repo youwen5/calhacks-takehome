@@ -34,7 +34,7 @@
               inherit (final) pname version src;
               inherit pnpm;
               fetcherVersion = 4;
-              hash = "sha256-RprBUxY7XhHj/TCYs6Ta4XhVCf/4CnwG6k3wLp/7Bk4=";
+              hash = "sha256-jDlVGyp7JBAv5RxrF26+02lQsvU9+QaOaiz0xbeyjHA=";
             };
             nativeBuildInputs = [ nodejs pnpm pkgs.pnpmConfigHook pkgs.python3 pkgs.pkg-config ];
             npm_config_nodedir = "${nodejs}";

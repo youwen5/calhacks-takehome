@@ -142,3 +142,10 @@ through the allowlisted `src/lib/navigation.ts` destinations when no usable even
 is present in the URL. Do not restore the organizer top navigation row or a global
 current-event setting. Event creation is a collapsed workspace action, not a
 sidebar destination or a permanently visible form.
+
+Event-day check-in, meal tickets, and sponsor codes are now explicitly in scope.
+Read docs/event-day.md for the contract. Keep one attendance record per event/user,
+use the latest published acceptance, version meal changes, and allocate codes in
+immediate transactions with one claim per sponsor/user. Preserve redeemed records.
+Follow Storke’s comparable page layouts; do not copy its global-event assumptions.
+Manage events belongs at the bottom of the sidebar, with creation collapsed.

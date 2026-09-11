@@ -22,11 +22,12 @@ input during hydration. Forms are validated and saved on the server.
 
 Local demo accounts use **`CalHacks-demo-2026!`**:
 
-| Email                   | Role                                                     |
-| ----------------------- | -------------------------------------------------------- |
-| `applicant@example.com` | Applicant with a published Fall hacker waitlist decision |
-| `reviewer@example.com`  | Fall reviewer, with no Spring access                     |
-| `manager@example.com`   | Event manager and local platform administrator           |
+| Email                   | Role                                                             |
+| ----------------------- | ---------------------------------------------------------------- |
+| `applicant@example.com` | Applicant with a published Fall hacker waitlist decision         |
+| `jordan@example.com`    | Applicant with a published acceptance; use for event-day testing |
+| `reviewer@example.com`  | Fall reviewer, with no Spring access                             |
+| `manager@example.com`   | Event manager and local platform administrator                   |
 
 `DEMO_PASSWORD` overrides the password on first seed. Seeds preserve existing data
 and refuse production mode. To register a new account locally, follow its verification
@@ -48,8 +49,10 @@ database, outbox, and generated local auth secret are ignored by Git.
 Reviewers cannot publish decisions. Organizers cannot review or decide their own
 applications. Completed grades are immutable; admission corrections have a reason
 and a separate decision revision. Waitlists are unranked, publication is manual,
-and admission notifications are portal-only. Resume uploads, RSVP/capacity handling,
-and automated ranking are intentionally outside scope.
+and admission notifications are portal-only. Automatic ranking and capacity handling
+are outside scope. PDF resumes, analytics, reviewer leaderboards, and CSV/JSON
+exports are supported. Event passes, attendance confirmation, check-in, four meal
+tickets, and sponsor codes follow Storke; see [event-day setup and walkthrough](docs/event-day.md).
 
 ## Verify
 

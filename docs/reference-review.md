@@ -100,3 +100,14 @@ than a second row of organizer buttons. Event selection is an explicit interveni
 page when required by Colmena's multi-event model. The application-type cards are
 shared between event information and My applications. Event creation is a collapsed
 workspace action, keeping routine application/review navigation prominent.
+
+## Event-day follow-up
+
+Reimplemented Storke’s check-in, admin/check-in, codes, and sponsor administration
+flows: 320px pass, high-resolution QR, fullscreen/wake lock, four meal tiles,
+colored attendee funnel/meal bars, two-column staff meal controls, sponsor cards,
+code dialog, inventory table and CSV. Layout and the four meal names/emojis derive
+from those reference pages. Authorization/storage are new event-scoped code;
+Storke’s production database and vendor code inventory were not copied.
+See event-day.md for intentional differences and setup. qrcode (MIT) and
+qr-scanner (MIT) are direct dependencies, with licenses retained in dependencies.

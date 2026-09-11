@@ -3,6 +3,8 @@
     name,
   }: {
     name:
+      | 'qr'
+      | 'gift'
       | 'chart'
       | 'trophy'
       | 'database'
@@ -30,7 +32,13 @@
   stroke-linejoin="round"
   aria-hidden="true"
 >
-  {#if name === 'calendar'}<rect x="3" y="5" width="18" height="16" rx="2" /><path
+  {#if name === 'qr'}<path
+      d="M3 3h6v6H3ZM15 3h6v6h-6ZM3 15h6v6H3ZM15 15h3v3h3v3h-6ZM12 3v3M12 12h3M3 12h3M12 18v3M21 12v3"
+    />
+  {:else if name === 'gift'}<path d="M3 9h18v4H3ZM5 13v8h14v-8M12 9v12" /><path
+      d="M12 9C4 9 5 2 8 3c3 0 4 6 4 6Zm0 0c8 0 7-7 4-6-3 0-4 6-4 6Z"
+    />
+  {:else if name === 'calendar'}<rect x="3" y="5" width="18" height="16" rx="2" /><path
       d="M16 3v4M8 3v4M3 11h18M8 15h.01M12 15h.01M16 15h.01M8 18h.01M12 18h.01"
     />
   {:else if name === 'files'}<path

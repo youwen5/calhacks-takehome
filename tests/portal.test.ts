@@ -1,3 +1,5 @@
+import { eventDay } from '../src/lib/server/event-day';
+import { scannedUser } from '../src/lib/domain/event-day';
 import { reports, toCsv } from '../src/lib/server/reports';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
@@ -621,4 +623,214 @@ describe('organizer reports', () => {
     time = Date.parse('2033-05-18T07:05:00Z');
     expect(r.leaderboard('reviewer', 'fall', 'today')).toHaveLength(0);
   });
+});
+
+describe('event management', () => {
+  it('restricts deletion to administrators and protects existing applications', () => {
+    const e = p.event('fall');
+    expect(() => p.deleteEvent('manager', 'fall', e.version, 'fall')).toThrow('administrator');
+    expect(() => p.deleteEvent('admin', 'fall', e.version, 'wrong')).toThrow('confirm');
+    expect(() => p.deleteEvent('admin', 'fall', e.version - 1, 'fall')).toThrow('changed');
+    submit();
+    expect(() => p.deleteEvent('admin', 'fall', e.version, 'fall')).toThrow('Archive');
+    p.archiveEvent('manager', 'fall', e.version);
+    expect(p.applicant('fall', 'applicant', 'hacker').application?.status).toBe('submitted');
+    expect(p.event('fall').status).toBe('archived');
+  });
+  it('deletes empty events atomically and restricts the management list', () => {
+    expect(() => p.managedEvents('reviewer')).toThrow('management');
+    const e = p.event('spring');
+    p.deleteEvent('admin', 'spring', e.version, 'spring');
+    expect(() => p.event('spring')).toThrow('not found');
+    expect(connection.sqlite.pragma('foreign_key_check')).toEqual([]);
+    expect(p.managedEvents('admin')).toHaveLength(1);
+  });
+});
+
+describe('event-day admission, meals and sponsor codes', () => {
+  function admit(actor = 'applicant') {
+    const id = submit(actor);
+    complete(id);
+    const revision = prepare(id);
+    p.publish('manager', 'fall', p.createRelease('manager', 'fall', [revision]));
+    return id;
+  }
+  const day = () => eventDay(connection.db, () => time);
+  it('requires a current published acceptance, confirmation and event staff', () => {
+    const d = day(),
+      id = submit();
+    complete(id);
+    const revision = prepare(id);
+    expect(d.pass('applicant', 'fall').accepted).toBe(false);
+    expect(() => d.confirm('applicant', 'fall', '')).toThrow('published acceptance');
+    p.publish('manager', 'fall', p.createRelease('manager', 'fall', [revision]));
+    expect(() => d.checkIn('reviewer', 'fall', 'applicant')).toThrow('Confirm attendance');
+    d.confirm('applicant', 'fall', 'Vegetarian');
+    expect(() => d.checkIn('other', 'fall', 'applicant')).toThrow('permission');
+    expect(() => d.roster('reviewer', 'spring')).toThrow('permission');
+    expect(() => d.meal('reviewer', 'fall', 'applicant', 'lunch', true, 0)).toThrow('Check in');
+    d.checkIn('reviewer', 'fall', 'applicant');
+    time++;
+    d.checkIn('manager', 'fall', 'applicant');
+    expect(d.pass('applicant', 'fall').attendance).toMatchObject({
+      dietary: 'Vegetarian',
+      checkerId: 'reviewer',
+      checkedInAt: time - 1,
+    });
+    const correction = prepare(id, 'rejected', 1);
+    p.publish('manager', 'fall', p.createRelease('manager', 'fall', [correction]));
+    expect(d.pass('applicant', 'fall').accepted).toBe(false);
+    expect(d.roster('reviewer', 'fall').people[0].accepted).toBe(false);
+    expect(() => d.checkIn('reviewer', 'fall', 'applicant')).toThrow('published acceptance');
+  });
+  it('shares admission across types and prevents replayed meal toggles', () => {
+    const d = day();
+    admit();
+    submit('applicant', 'mentor');
+    d.confirm('applicant', 'fall', '');
+    d.checkIn('reviewer', 'fall', 'applicant');
+    expect(d.roster('reviewer', 'fall').people).toHaveLength(1);
+    d.meal('reviewer', 'fall', 'applicant', 'lunch', true, 0);
+    expect(() => d.meal('manager', 'fall', 'applicant', 'lunch', true, 0)).toThrow('changed');
+    expect(d.pass('applicant', 'fall').meals).toMatchObject([{ meal: 'lunch', version: 1 }]);
+    d.meal('manager', 'fall', 'applicant', 'lunch', false, 1);
+    expect(() => d.meal('reviewer', 'fall', 'applicant', 'lunch', true, 1)).toThrow('changed');
+    expect(d.pass('applicant', 'fall').meals[0].usedAt).toBeNull();
+    expect(() => d.meal('reviewer', 'fall', 'applicant', 'invalid', true, 0)).toThrow(
+      'Invalid meal',
+    );
+    expect(d.roster('manager', 'fall').mealStats).toEqual([]);
+    expect(d.pass('applicant', 'spring').attendance).toBeNull();
+    const e = p.event('fall');
+    p.archiveEvent('manager', 'fall', e.version);
+    expect(() => d.meal('manager', 'fall', 'applicant', 'lunch', true, 2)).toThrow('not active');
+  });
+  it('restricts sponsor management and claims, retains redeemed inventory and isolates events', () => {
+    const d = day();
+    admit();
+    expect(() => d.createSponsor('reviewer', 'fall', 'Cloud')).toThrow('permission');
+    const id = d.createSponsor('manager', 'fall', 'Cloud');
+    d.addCodes('manager', 'fall', id, 'ONE, TWO\nTHREE');
+    expect(() => d.sponsorDetail('reviewer', 'fall', id)).toThrow('permission');
+    expect(() => d.addCodes('manager', 'spring', id, 'BAD')).toThrow('not found');
+    expect(() => d.redeem('applicant', 'fall', id)).toThrow('Check in');
+    d.confirm('applicant', 'fall', '');
+    d.checkIn('reviewer', 'fall', 'applicant');
+    const code = d.redeem('applicant', 'fall', id);
+    expect(d.redeem('applicant', 'fall', id)).toBe(code);
+    expect(d.sponsors('manager', 'fall')[0]).toMatchObject({
+      total: 3,
+      redeemed: 1,
+      available: 2,
+      ownCode: null,
+    });
+    expect(d.pass('other', 'fall').sponsors[0].ownCode).toBeNull();
+    expect(d.pass('applicant', 'fall').sponsors[0].ownCode).toBe(code);
+    const codes = d.sponsorDetail('manager', 'fall', id).codes;
+    expect(() => d.deleteCode('manager', 'fall', id, codes.find((c) => c.redeemedAt)!.id)).toThrow(
+      'retained',
+    );
+    expect(() => d.deleteSponsor('manager', 'fall', id)).toThrow('retained');
+    d.deleteCode('manager', 'fall', id, codes.find((c) => !c.redeemedAt)!.id);
+    expect(connection.sqlite.pragma('foreign_key_check')).toEqual([]);
+  });
+  it('allows deletion of empty events with unused sponsor pools', () => {
+    const d = day(),
+      id = d.createSponsor('manager', 'spring', 'Unused');
+    d.addCodes('manager', 'spring', id, 'a,b');
+    p.deleteEvent('admin', 'spring', p.event('spring').version, 'spring');
+    expect(connection.db.select().from(s.sponsorCode).all()).toEqual([]);
+    expect(connection.sqlite.pragma('foreign_key_check')).toEqual([]);
+  });
+  it('rejects pass URLs from other origins or events', () => {
+    const id = crypto.randomUUID(),
+      origin = 'https://portal.example.com';
+    expect(scannedUser(id, 'fall', origin)).toBe(id);
+    expect(
+      scannedUser(
+        'https://portal.example.com/organizer/fall/check-in/aB12cD34eF56gH78iJ90kL12mN34oP56',
+        'fall',
+        origin,
+      ),
+    ).toBe('aB12cD34eF56gH78iJ90kL12mN34oP56');
+    expect(scannedUser(origin + '/organizer/fall/check-in/' + id, 'fall', origin)).toBe(id);
+    expect(scannedUser(origin + '/organizer/spring/check-in/' + id, 'fall', origin)).toBeNull();
+    expect(
+      scannedUser('https://evil.example/organizer/fall/check-in/' + id, 'fall', origin),
+    ).toBeNull();
+    expect(scannedUser('javascript:alert(1)', 'fall', origin)).toBeNull();
+  });
+});
+
+it('allocates the last sponsor code once across independent SQLite writers', async () => {
+  const d = eventDay(connection.db, () => time);
+  for (const actor of ['applicant', 'other']) {
+    const id = submit(actor);
+    complete(id);
+    const revision = prepare(id);
+    p.publish('manager', 'fall', p.createRelease('manager', 'fall', [revision]));
+    d.confirm(actor, 'fall', '');
+    d.checkIn('reviewer', 'fall', actor);
+  }
+  const sponsor = d.createSponsor('manager', 'fall', 'Single code');
+  d.addCodes('manager', 'fall', sponsor, 'LAST-CODE');
+  const directory = mkdtempSync(join(tmpdir(), 'colmena-code-race-'));
+  const filename = join(directory, 'portal.db');
+  await connection.sqlite.backup(filename);
+  const local = connect(filename);
+  const workers = ['applicant', 'other'].map((actor) =>
+    spawn(
+      process.execPath,
+      [
+        '--import',
+        'tsx',
+        '--input-type=module',
+        '-e',
+        `import {connect} from './src/lib/server/db/index.ts';
+     import {eventDay} from './src/lib/server/event-day.ts';
+     const c=connect(process.argv[1]),d=eventDay(c.db,()=>${time});
+     process.once('message',()=>{
+       try{process.send({ok:true,value:d.redeem('${actor}','fall','${sponsor}')});}
+       catch(e){process.send({ok:false,message:e.message});}
+       finally{c.sqlite.close();process.disconnect();}
+     });process.send('ready');`,
+        filename,
+      ],
+      { stdio: ['ignore', 'ignore', 'pipe', 'ipc'] },
+    ),
+  );
+  try {
+    await Promise.all(
+      workers.map(
+        (w) =>
+          new Promise<void>((resolve, reject) => {
+            w.once('message', () => resolve());
+            w.once('error', reject);
+            w.once('exit', () => reject(Error('worker exited before readiness')));
+          }),
+      ),
+    );
+    local.sqlite.exec('BEGIN IMMEDIATE');
+    const results = workers.map(
+      (w) =>
+        new Promise<{ ok: boolean; value?: string; message?: string }>((resolve, reject) => {
+          w.once('message', (r) => resolve(r as { ok: boolean }));
+          w.once('error', reject);
+          w.once('exit', () => reject(Error('worker exited without result')));
+          w.send('go');
+        }),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    local.sqlite.exec('COMMIT');
+    const outcomes = await Promise.all(results);
+    expect(outcomes.filter((r) => r.ok)).toEqual([{ ok: true, value: 'LAST-CODE' }]);
+    expect(outcomes.filter((r) => !r.ok)[0].message).toContain('No codes available');
+    expect(local.db.select().from(s.sponsorCode).all()).toHaveLength(1);
+    expect(local.sqlite.pragma('foreign_key_check')).toEqual([]);
+  } finally {
+    if (local.sqlite.inTransaction) local.sqlite.exec('ROLLBACK');
+    workers.forEach((w) => w.kill());
+    local.sqlite.close();
+    rmSync(directory, { recursive: true, force: true });
+  }
 });

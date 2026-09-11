@@ -1,19 +1,45 @@
 import { parseInstant } from '$lib/domain/time';
-import { service, signedIn, actionData, formData, string } from '$lib/server/http';
+import {
+  service,
+  loadData,
+  signedIn,
+  actionData,
+  formData,
+  string,
+  number,
+} from '$lib/server/http';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
-export const load: PageServerLoad = ({ locals }) => {
-  const actor = signedIn(locals);
-  const p = service();
-  const access = p.identity(actor.id);
-  return {
-    events: access.administrator
-      ? p.events(actor.id)
-      : p.events(actor.id).filter((e) => access.memberships.some((m) => m.eventId === e.id)),
-    access,
-  };
-};
+export const load: PageServerLoad = ({ locals }) =>
+  loadData(() => {
+    const actor = signedIn(locals);
+    const p = service();
+    const access = p.identity(actor.id);
+    return {
+      events: p.managedEvents(actor.id),
+      access,
+    };
+  });
 export const actions: Actions = {
+  delete: async ({ locals, request }) => {
+    const actor = signedIn(locals),
+      f = await formData(request);
+    return actionData(() =>
+      service().deleteEvent(
+        actor.id,
+        string(f, 'slug'),
+        number(f, 'version'),
+        string(f, 'confirmation'),
+      ),
+    );
+  },
+  archive: async ({ locals, request }) => {
+    const actor = signedIn(locals),
+      f = await formData(request);
+    return actionData(() =>
+      service().archiveEvent(actor.id, string(f, 'slug'), number(f, 'version')),
+    );
+  },
   create: async ({ locals, request }) => {
     const actor = signedIn(locals);
     const f = await formData(request);
