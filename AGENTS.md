@@ -136,3 +136,9 @@ event timezone. Protect spreadsheet exports against formula injection.
 Local seeds now use sourced 2025 Cal Hacks event names/descriptions; the user
 explicitly requested keeping dates open for testing. Do not restore hypothetical
 marketing copy or overwrite existing event dates during a seed rerun.
+
+Keep applicant and organizer destinations in the sidebar, with event selection
+through the allowlisted `src/lib/navigation.ts` destinations when no usable event
+is present in the URL. Do not restore the organizer top navigation row or a global
+current-event setting. Event creation is a collapsed workspace action, not a
+sidebar destination or a permanently visible form.

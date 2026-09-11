@@ -404,3 +404,22 @@ Aggregations run over compact result sets, with no per-application query loop.
 Exports materialize the selected event dataset in memory; very large essay datasets
 would warrant streaming or background export generation. No scale/load claim is
 made from the functional checks.
+
+### Sidebar navigation and event selection
+
+Applicant and organizer sections live in the persistent sidebar. Event context is
+read from the route, not a global preference or cookie, so separate tabs can work
+on different events. My applications opens an event's independent Hacker/Mentor
+choices. Organizer links point to that event's queue, analytics, leaderboard,
+warehouse, releases, and settings; the duplicate horizontal menu is removed.
+
+Outside event routes, links open `/select-event?for=<destination>`. The picker
+accepts only keys in `src/lib/navigation.ts` and lists events visible to the user
+with the appropriate event role. If the current event lacks the needed role, the
+link also uses the picker. Change event preserves the selected section. This is
+navigation filtering only: each destination still enforces server authorization.
+
+Event creation remains administrator-only, behind a Create event button in the
+organizer workspace. The form opens on demand and reopens after server validation
+errors. It has no sidebar entry. Sidebar links keep a consistent vertical gap and
+do not shrink; the navigation area scrolls independently on shorter screens.

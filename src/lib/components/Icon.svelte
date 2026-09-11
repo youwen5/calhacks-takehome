@@ -1,8 +1,22 @@
 <script lang="ts">
   let {
     name,
-  }: { name: 'calendar' | 'files' | 'menu' | 'close' | 'moon' | 'sun' | 'logout' | 'user' } =
-    $props();
+  }: {
+    name:
+      | 'chart'
+      | 'trophy'
+      | 'database'
+      | 'send'
+      | 'settings'
+      | 'calendar'
+      | 'files'
+      | 'menu'
+      | 'close'
+      | 'moon'
+      | 'sun'
+      | 'logout'
+      | 'user';
+  } = $props();
 </script>
 
 <svg
@@ -22,6 +36,15 @@
   {:else if name === 'files'}<path
       d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z M14 2v6h6M8 13h8M8 17h6"
     />
+  {:else if name === 'chart'}<path d="M4 3v18h17M8 16v-4M13 16V8M18 16V5" />
+  {:else if name === 'trophy'}<path
+      d="M8 3h8v5a4 4 0 0 1-8 0ZM8 5H4v3a4 4 0 0 0 4 4M16 5h4v3a4 4 0 0 1-4 4M12 12v6M8 21v-3h8v3"
+    />
+  {:else if name === 'database'}<ellipse cx="12" cy="5" rx="8" ry="3" /><path
+      d="M4 5v14c0 4 16 4 16 0V5M4 12c0 4 16 4 16 0"
+    />
+  {:else if name === 'send'}<path d="m3 3 18 9-18 9 4-9-4-9Zm4 9h14" />
+  {:else if name === 'settings'}<path d="M4 6h16M4 12h16M4 18h16M8 3v6M16 9v6M10 15v6" />
   {:else if name === 'menu'}<path d="M4 6h16M4 12h16M4 18h16" />
   {:else if name === 'close'}<path d="m6 6 12 12M6 18 18 6" />
   {:else if name === 'moon'}<path d="M21 13a9 9 0 0 1-10-10 9 9 0 1 0 10 10Z" />

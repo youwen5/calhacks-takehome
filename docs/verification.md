@@ -146,3 +146,23 @@ records, credentials, or judging subsystem were imported.
   testing. The live development events page returned HTTP 200 on port 5173.
 - Formatting and git whitespace checks pass. Updated architecture, source attribution,
   environment setup, deployment notes, and AGENTS.md document the expanded scope.
+
+## Analytics layout and sidebar navigation follow-up
+
+- Analytics now follows Storke's three-column summary, full-width colored status
+  section, paired secondary charts, and full-width ranked organization table.
+  Browser measurements confirm the status section spans the content width;
+  visually inspected light/dark themes and mobile layout without page overflow.
+- Applicant and organizer links moved into the sidebar, with allowlisted event
+  selection and event-preserving section changes. Event creation stays collapsed
+  behind its workspace button. Sidebar links measure at least 36px high with 4px
+  gaps; navigation scrolls rather than compressing on mobile.
+- Type checking reports zero errors/warnings and the production build passes.
+  The expanded browser run passed 13 of 14 cases and exposed a fast-click event
+  transition race. Links now become inert during navigation; both targeted sidebar
+  cases pass after the fix, including mobile navigation and invalid destinations.
+  Existing upload, review, release, auth, analytics/export, and event creation flows
+  passed in the full run. No tests were skipped to address the failure.
+- Source reuse and URL-based navigation decisions are documented in architecture,
+  reference-review, and AGENTS.md. This UI follow-up does not rebuild the OCI image;
+  the previously recorded image predates these layout/navigation changes.

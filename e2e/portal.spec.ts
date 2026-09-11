@@ -275,6 +275,8 @@ test('organizers create and publish a new event, offer both types, and assign a 
   const page = await context.newPage();
   await login(page, 'manager@example.com');
   await page.goto('/organizer');
+  await expect(page.getByLabel('Event name', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Create event', exact: true }).click();
   const slug = `browser-event-${Date.now()}`;
   await page.getByLabel('Event name', { exact: true }).fill('Browser community weekend');
   await page.getByLabel('URL slug').fill(slug);
@@ -384,4 +386,47 @@ test('application card titles stay aligned when only one has a decision badge', 
   await expect(
     page.locator('.application-card').first().getByText('waitlisted', { exact: true }),
   ).toBeVisible();
+});
+
+test('sidebar picks an event and keeps destinations scoped when switching', async ({ page }) => {
+  await login(page, 'manager@example.com');
+  const nav = page.getByRole('navigation', { name: 'Main navigation', exact: true });
+  await nav.getByRole('link', { name: 'Application analytics', exact: true }).click();
+  await expect(page).toHaveURL(/select-event\?for=analytics/);
+  await page.getByRole('link', { name: 'Select Cal Hacks 12.0', exact: false }).click();
+  await expect(page).toHaveURL(/organizer\/cal-hacks-fall\/analytics$/);
+  await expect(
+    nav.getByRole('link', { name: 'Application analytics', exact: true }),
+  ).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('navigation', { name: 'Event organizer navigation' })).toHaveCount(0);
+  await nav.getByRole('link', { name: 'Change event', exact: true }).click();
+  await page.getByRole('link', { name: 'Select UC Berkeley AI Hackathon', exact: false }).click();
+  await expect(page).toHaveURL(/organizer\/cal-hacks-spring\/analytics$/);
+  await nav.getByRole('link', { name: 'My applications', exact: true }).click();
+  await expect(page).toHaveURL(/events\/cal-hacks-spring\/applications$/);
+  await expect(page.getByRole('heading', { name: 'Hacker', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Mentor', exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Open menu', exact: true }).click();
+  await nav.getByRole('link', { name: 'Applications', exact: true }).click();
+  await expect(page).toHaveURL(/organizer\/cal-hacks-spring$/);
+  await expect(page.getByRole('button', { name: 'Open menu', exact: true })).toBeVisible();
+});
+
+test('applicant sidebar does not expose organizer sections or arbitrary picker redirects', async ({
+  page,
+}) => {
+  await login(page, 'applicant@example.com');
+  const nav = page.getByRole('navigation', { name: 'Main navigation', exact: true });
+  await expect(nav.getByRole('link', { name: 'Application analytics', exact: true })).toHaveCount(
+    0,
+  );
+  await nav.getByRole('link', { name: 'My applications', exact: true }).click();
+  await page.getByRole('link', { name: 'Select Cal Hacks 12.0', exact: false }).click();
+  await expect(page).toHaveURL(/events\/cal-hacks-fall\/applications$/);
+  await expect(page.getByRole('link', { name: 'View application' })).toBeVisible();
+  await page.goto('/select-event?for=analytics');
+  await expect(page.getByText('No events are available for this section.')).toBeVisible();
+  const invalid = await page.goto('/select-event?for=https://example.com');
+  expect(invalid?.status()).toBe(400);
 });

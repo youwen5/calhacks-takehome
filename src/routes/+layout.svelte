@@ -1,8 +1,9 @@
 <script lang="ts">
   import '../app.css';
   import LoadingBar from '$lib/components/LoadingBar.svelte';
+  import { destinations, canNavigate, destinationUrl, type Destination } from '$lib/navigation';
   import Icon from '$lib/components/Icon.svelte';
-  import { page } from '$app/state';
+  import { page, navigating } from '$app/state';
   import { goto, onNavigate } from '$app/navigation';
   import { MediaQuery } from 'svelte/reactivity';
   import { authClient } from '$lib/auth-client';
@@ -18,6 +19,33 @@
   const isAuth = $derived(
     ['/login', '/register', '/forgot-password', '/reset-password'].includes(page.url.pathname),
   );
+  const selectedEvent = $derived(data.navigationEvent);
+  const organizerLinks = $derived(
+    destinations.filter(
+      (d) =>
+        d.scope !== 'applicant' &&
+        (data.access.memberships.some((m) => canNavigate(d, m.eventId, data.access)) ||
+          (d.scope === 'settings' && data.access.administrator)),
+    ),
+  );
+  function navHref(destination: Destination) {
+    return selectedEvent && canNavigate(destination, selectedEvent.id, data.access)
+      ? destinationUrl(destination, selectedEvent.slug)
+      : '/select-event?for=' + destination.key;
+  }
+  function isCurrent(destination: Destination) {
+    if (page.url.pathname === '/select-event')
+      return page.url.searchParams.get('for') === destination.key;
+    if (!selectedEvent) return false;
+    const base = destinationUrl(destination, selectedEvent.slug);
+    return (
+      page.url.pathname === base ||
+      (destination.key === 'review'
+        ? page.url.pathname.startsWith(base + '/applications/')
+        : page.url.pathname.startsWith(base + '/'))
+    );
+  }
+  const currentDestination = $derived(destinations.find(isCurrent) ?? destinations[0]);
   onMount(() => {
     dark = document.documentElement.dataset.theme === 'dark';
     ready = true;
@@ -104,16 +132,41 @@
   </header>
   <aside id="portal-sidebar" class:open={menuOpen}>
     <div class="sidebar-brand">{@render brand()}</div>
-    <nav aria-label="Main navigation">
-      <a href="/events" class:current={page.url.pathname.startsWith('/events')}
+    <!-- Keep links from using the outgoing event while its page transition finishes. -->
+    <nav aria-label="Main navigation" inert={!!navigating.to} aria-busy={!!navigating.to}>
+      {#if selectedEvent}<div class="event-context">
+          <span class="nav-section-label">Event</span><strong>{selectedEvent.name}</strong><a
+            href={'/select-event?for=' + currentDestination.key}>Change event</a
+          >
+        </div>{/if}
+      <a href="/events" class:current={page.url.pathname === '/events'}
         ><Icon name="calendar" />Explore events</a
       >
-      {#if data.access.administrator || data.access.memberships.length}<div class="nav-section">
+      {#if selectedEvent}<a
+          href={'/events/' + selectedEvent.slug}
+          class:current={page.url.pathname === '/events/' + selectedEvent.slug}
+          ><Icon name="calendar" />Event info</a
+        >{/if}
+      <div class="nav-section">Applications</div>
+      <a
+        href={navHref(destinations[0])}
+        class:current={isCurrent(destinations[0])}
+        aria-current={isCurrent(destinations[0]) ? 'page' : undefined}
+        ><Icon name="files" />My applications</a
+      >
+      {#if organizerLinks.length || data.access.administrator}<div class="nav-section">
           Administration
         </div>
-        <a href="/organizer" class:current={page.url.pathname.startsWith('/organizer')}
-          ><Icon name="files" />Organizer workspace</a
-        >{/if}
+        <a href="/organizer" class:current={page.url.pathname === '/organizer'}
+          ><Icon name="calendar" />Organizer workspace</a
+        >
+        {#each organizerLinks as destination}<a
+            href={navHref(destination)}
+            class:current={isCurrent(destination)}
+            aria-current={isCurrent(destination) ? 'page' : undefined}
+            ><Icon name={destination.icon} />{destination.label}</a
+          >{/each}
+      {/if}
     </nav>
     <div class="sidebar-settings">{@render themeButton()}</div>
     <div class="identity">
@@ -179,8 +232,15 @@
   }
   aside nav {
     flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     overflow: auto;
     padding: 16px;
+  }
+  aside nav > * {
+    flex-shrink: 0;
   }
   aside nav a,
   .nav-control {
@@ -202,6 +262,27 @@
   aside nav a.current {
     background: var(--color-accent);
     color: var(--color-accent-foreground);
+  }
+  .event-context {
+    padding: 8px 12px 16px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .event-context strong {
+    display: block;
+    font-size: 14px;
+  }
+  .event-context a {
+    padding: 8px 0;
+    min-height: 0;
+    text-decoration: underline;
+    font-size: 12px;
+  }
+  .nav-section-label {
+    display: block;
+    font-size: 12px;
+    color: var(--color-muted-foreground);
+    margin-bottom: 4px;
   }
   .nav-section {
     border-top: 1px solid var(--color-border);

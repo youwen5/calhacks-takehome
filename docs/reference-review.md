@@ -86,3 +86,17 @@ subsystem. Permissions are event-specific, leaderboard credit comes from complet
 reviews, and latest released revisions avoid duplicate counts after promotions.
 Exports deliberately omit auth data and private drafts. Resumes follow Storke's
 upload/preview flow but use atomic SQLite storage instead of S3 presigned URLs.
+
+The analytics layout now follows Storke's application-stats hierarchy: three-column
+summary cards, a full-width status section, paired secondary distributions, and a
+full-width ranked school/organization table. Submission dates also span the content
+width. Status colors match Storke's emerald/rose/amber/blue/gray mapping; secondary
+charts use blue, violet, and emerald. Bars show each category's share of the total,
+with explicit counts and percentages, rather than scaling the largest bar to 100%.
+Metric text colors have lighter dark-theme variants. Mobile charts stack vertically.
+
+Applicant and organizer destinations now use Storke's persistent sidebar flow rather
+than a second row of organizer buttons. Event selection is an explicit intervening
+page when required by Colmena's multi-event model. The application-type cards are
+shared between event information and My applications. Event creation is a collapsed
+workspace action, keeping routine application/review navigation prominent.
