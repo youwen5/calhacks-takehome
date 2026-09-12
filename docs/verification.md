@@ -178,3 +178,22 @@ Type checking reports zero errors/warnings and the production build passes.
 The event pass retains its 320px maximum width, per the user's correction.
 The running development server is available at http://localhost:5173.
 This follow-up does not rebuild or deploy the OCI image.
+
+## Email-free VPS deployment and public demo banner
+
+The Nix-built image targets the configured HTTPS origin `https://calhacks.youwen.dev`.
+The latest image was loaded into Podman and passed the network-disabled container
+smoke: production registration, demo verification, disabled password reset,
+migration failure handling, application/profile/PDF/event-day persistence, and
+backup restoration. The checked-in Compose file passed a separate isolated-project
+smoke with loopback HTTP, healthcheck, all five advertised demo logins, named-volume
+persistence, and forced container replacement. The smoke honors auth rate limits
+when switching rapidly between accounts. All temporary containers/volumes were
+removed.
+
+47 unit tests pass. The full 18-case browser suite passed after the email-disabled
+changes; the four relevant landing/sidebar/mobile cases passed again after adding
+the banner. Live development browser checks showed five accounts and no horizontal
+overflow at 1440px and 390px. The Nix build performs type checking, unit tests, and
+the production build. No VPS connection or public deployment was performed: the
+public hostname is configured, but an SSH target/access was not supplied.

@@ -2,10 +2,32 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { connect } from '../src/lib/server/db';
 import { user } from '../src/lib/server/db/schema';
-import { demoEmailVerificationEnabled, verifyDemoEmail } from '../src/lib/server/demo';
+import {
+  demoAccountsEnabled,
+  demoEmailVerificationEnabled,
+  verifyDemoEmail,
+} from '../src/lib/server/demo';
 
 afterEach(() => vi.unstubAllEnvs());
 describe('demo email verification', () => {
+  it('requires explicit email-free production configuration for public demo accounts', () => {
+    expect(demoAccountsEnabled({ NODE_ENV: 'production' })).toBe(false);
+    expect(demoAccountsEnabled({ NODE_ENV: 'development', DEMO_ACCOUNTS: 'false' })).toBe(false);
+    expect(() => demoAccountsEnabled({ NODE_ENV: 'production', DEMO_ACCOUNTS: 'true' })).toThrow(
+      'MAIL_MODE=disabled',
+    );
+    expect(
+      demoAccountsEnabled({
+        NODE_ENV: 'production',
+        DEMO_ACCOUNTS: 'true',
+        MAIL_MODE: 'disabled',
+        DEMO_EMAIL_VERIFICATION: 'true',
+      }),
+    ).toBe(true);
+    expect(() =>
+      demoAccountsEnabled({ DEMO_ACCOUNTS: 'true', DEMO_PASSWORD: 'private-password' }),
+    ).toThrow('fixed password');
+  });
   it('defaults on locally, off in production, and honors explicit configuration', () => {
     expect(demoEmailVerificationEnabled({ NODE_ENV: 'development' })).toBe(true);
     expect(demoEmailVerificationEnabled({ NODE_ENV: 'production' })).toBe(false);

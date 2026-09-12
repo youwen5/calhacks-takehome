@@ -1,4 +1,4 @@
-# Colmena · (Cal Hacks Take Home Project)
+# Colmena (Cal Hacks Take Home Project)
 
 A hackathon application portal for multiple events, with independent hacker and
 mentor applications, organizer grading, waitlists, and explicit decision
@@ -55,3 +55,13 @@ didn't set up an AWS account for the project.
 Also we store the PDFs directly in SQLite for this demo but in a real
 production deployment they would obviously be in an S3 bucket (this is what we
 did at SB Hacks last year).
+
+The supplied VPS demo enables `DEMO_ACCOUNTS=true`: startup seeds the five accounts
+shown in the landing-page banner, all using `CalHacks-demo-2026!`. It also creates
+the two demo events. Subsequent starts preserve existing demo data. The shared
+organizer account has administrative access; this deployment is a public sandbox.
+
+Container releases are published to `ghcr.io/youwen5/calhacks-takehome` by the
+manual **Publish container** workflow. Compose uses the published image; local
+builds can override `PORTAL_IMAGE=localhost/calhacks-portal:local`. See the runbook
+for registry access and digest-pinned updates.

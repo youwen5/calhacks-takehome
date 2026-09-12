@@ -7,7 +7,8 @@ No SES, S3, cloud keys, external database, or email service is needed.
 
 ## Email-free demo behavior
 
-Compose explicitly sets `MAIL_MODE=disabled` and `DEMO_EMAIL_VERIFICATION=true`.
+Compose explicitly sets `MAIL_MODE=disabled`, `DEMO_EMAIL_VERIFICATION=true`,
+and `DEMO_ACCOUNTS=true`.
 Registration/sign-in work without attempting email delivery. Applicants use the
 verification-bypass button on their application to submit. This does not prove
 mailbox ownership. Password-reset delivery and verification resend are disabled;
@@ -15,7 +16,32 @@ the UI explains the limitation instead of claiming an email was sent. Keep your
 account password. The local development outbox remains development-only, never a
 public endpoint. Optional real email configuration remains in [providers.md](providers.md).
 
-## Build and load the image
+## Pull the published image
+
+Compose references `ghcr.io/youwen5/calhacks-takehome` and uses `pull_policy: missing`.
+The production env example leaves `PORTAL_IMAGE` unset so the checked-in image
+reference is used. The publishing workflow also tags releases with their full Git
+commit and maintains `latest`; prefer the exact digest for a reproducible rollout.
+
+```sh
+podman compose --env-file .env.production pull
+podman compose --env-file .env.production up -d
+```
+
+GitHub initially creates container packages as private. If anonymous pulls are
+not enabled, authenticate on the VPS using a GitHub personal access token (classic)
+with `read:packages`, entering it at the password prompt:
+
+```sh
+podman login ghcr.io -u youwen5
+```
+
+Alternatively, the owner can make the package public in GitHub's package settings
+for anonymous pulls. See [GitHub package visibility](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility).
+Registry credentials are for the container engine, never application environment
+variables. No AWS credentials are needed.
+
+## Build and load the image locally
 
 Build on Linux with Nix flakes enabled, using the VPS CPU architecture. The flake
 supports x86_64-linux and aarch64-linux. A build on x86_64 is not an ARM image;
@@ -26,12 +52,15 @@ nix build .#docker-image -o result-image
 podman load -i result-image
 podman tag calhacks-portal:local localhost/calhacks-portal:local
 nix develop --command node scripts/container-smoke.mjs
+# With a Compose provider installed:
+nix develop --command node scripts/compose-smoke.mjs
 ```
 
 The Nix build type-checks, runs unit tests, builds SvelteKit's Node adapter, and
 bundles migration/admin/backup commands with Node and native SQLite dependencies.
 At runtime Nix is not required inside the image. No Dockerfile/npm install at
-startup is needed: Compose runs the Nix-built image, with `pull_policy: never`.
+startup is needed: Compose runs the Nix-built image. For a locally loaded build, set
+`PORTAL_IMAGE=localhost/calhacks-portal:local`.
 
 For a Git-backed flake, new source files must be tracked with `git add` before
 building. Commit the lockfile. Dependency changes may require updating
@@ -121,31 +150,32 @@ Use one instance on local filesystem storage; do not share this volume across
 replicas or network filesystems.
 
 Migrations run before HTTP starts and stop startup if they fail. Secrets and
-runtime data are excluded from the image. Production does not seed demo passwords
-or overwrite local data. For a fresh deployment:
+runtime data are excluded from the image. With the supplied demo configuration, startup seeds five shared accounts and two
+events with open testing dates. The landing-page banner lists their emails, roles,
+and shared password: **CalHacks-demo-2026!**. Use **manager@example.com** to manage
+events; **reviewer@example.com** reviews Cal Hacks 12.0; **applicant@example.com**,
+**jordan@example.com**, and **morgan@example.com** demonstrate applicant states.
+The seed preserves existing accounts/applications/event dates on subsequent starts.
+It does not reset shared demo changes or rewrite passwords at startup.
 
-1. Register your account through the public site.
-2. Open an application and click **Bypass email verification (demo)**. If there
-   are no published events yet, use the same authenticated demo endpoint from the
-   browser console on this origin:
+This is intentionally a public sandbox: the organizer login grants event management
+and platform administration. Use synthetic data. To operate a separate deployment
+without shared accounts, set `DEMO_ACCOUNTS=false` before initializing its volume;
+this also hides the banner. Disabling the flag later does not delete already-created
+accounts. For a custom administrator in an unseeded instance, register, verify with
+the demo endpoint on the same origin, and grant access:
 
 ```js
 await fetch('/api/demo/verify-email', { method: 'POST' }).then((r) => r.json());
 ```
 
-3. Grant the account platform administration:
-
 ```sh
 podman compose --env-file .env.production exec portal calhacks-admin YOUR_EMAIL
 ```
 
-4. Sign in again or refresh, open **Manage events**, and create/publish an event.
-   Assign event manager/reviewer memberships explicitly. Platform administration
-   alone does not grant permission to review or publish decisions.
-
 An existing database can be transferred only via a SQLite-aware backup, with the
-new service stopped. The instructions here initialize a fresh deployment; they do
-not automatically copy local test accounts or data to the VPS.
+new service stopped. The instructions here seed a fresh demo deployment; they do not copy the local
+development database or its subsequent edits to the VPS.
 
 ## Start after a reboot
 
@@ -193,3 +223,20 @@ preserve the failed database and WAL/SHM files, restore the backup to `/data/por
 remove stale WAL/SHM files for that filename, restore container-user ownership,
 and start the matching old image. Verify restoration on a separate local volume
 before using this procedure against live data.
+
+## Publish another release
+
+The manually dispatched **Publish container** workflow builds with Nix, exercises
+both container and Compose smoke checks, then pushes a commit tag and `latest` to
+`ghcr.io/youwen5/calhacks-takehome`. It uses the repository's ephemeral
+`GITHUB_TOKEN` with `packages: write`, so no registry secret is stored in this repo.
+OCI labels associate the package with this source repository and commit.
+
+```sh
+gh workflow run publish.yml --ref main
+gh run list --workflow publish.yml
+```
+
+Wait for success and copy the digest from the run summary into Compose's default
+image reference before rolling out. A source push alone does not publish; pull
+request code never receives registry write credentials.

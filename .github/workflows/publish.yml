@@ -1,0 +1,41 @@
+name: Publish container
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+concurrency:
+  group: publish-container
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: cachix/install-nix-action@b85815f71a6de0ddee80b8a80a98d43f4bcc66c7 # v31
+      - name: Build Nix image (includes type checks and unit tests)
+        run: nix build .#docker-image -o result-image
+      - name: Load and test the image
+        run: |
+          docker load -i result-image
+          CONTAINER_ENGINE=docker node scripts/container-smoke.mjs
+          CONTAINER_ENGINE=docker SMOKE_IMAGE=calhacks-portal:local node scripts/compose-smoke.mjs
+      - name: Publish to GitHub Container Registry
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          image=ghcr.io/youwen5/calhacks-takehome
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+          docker tag calhacks-portal:local "$image:$GITHUB_SHA"
+          docker tag calhacks-portal:local "$image:latest"
+          docker push "$image:$GITHUB_SHA"
+          docker push "$image:latest"
+          reference=$(docker image inspect --format '{{index .RepoDigests 0}}' "$image:$GITHUB_SHA")
+          docker pull "$reference"
+          printf 'Published image: %s\n' "$reference"
+          printf 'Published image: `%s`\n\nSource commit: `%s`\n' "$reference" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          docker logout ghcr.io

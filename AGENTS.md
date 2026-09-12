@@ -178,3 +178,13 @@ For the VPS demo, Compose explicitly sets MAIL_MODE=disabled and
 DEMO_EMAIL_VERIFICATION=true. Disable auth email callbacks and show accurate UI;
 never pretend reset or verification mail was sent. Development outbox remains
 development-only. SES stays optional for future deployments, not a Compose dependency.
+
+The user requests a public demo-account banner. Compose enables DEMO_ACCOUNTS=true
+to seed and advertise the same fixed credentials from src/lib/demo-accounts.ts.
+The Nix entrypoint seeds only with that explicit flag. Preserve existing data on
+restart; never seed public credentials in a non-demo production configuration.
+
+The user authorized publishing the image to GHCR under youwen5/calhacks-takehome
+and referencing it from Compose. Use the manual Publish container workflow with
+repository-scoped packages:write permission; never expose CLI/Actions tokens.
+Publish only tested images and pin Compose to the resulting digest.

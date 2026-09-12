@@ -46,12 +46,14 @@
               pnpm check
               pnpm test
               pnpm build
-              pnpm exec esbuild scripts/migrate.ts scripts/admin.ts scripts/backup.ts --bundle --platform=node --format=esm --packages=external --outdir=dist --out-extension:.js=.mjs
+              pnpm exec esbuild scripts/migrate.ts scripts/admin.ts scripts/backup.ts scripts/seed.ts --bundle --platform=node --format=esm --packages=external --outdir=dist --out-extension:.js=.mjs
               runHook postBuild
             '';
             installPhase = ''
               runHook preInstall
               pnpm prune --prod --ignore-scripts
+              mkdir -p dist/fixtures
+              cp scripts/fixtures/demo-resume.pdf dist/fixtures/
               mkdir -p $out/app
               cp -r build dist drizzle package.json node_modules $out/app/
               runHook postInstall
@@ -66,6 +68,9 @@
             export DATABASE_PATH="''${DATABASE_PATH:-/data/portal.db}"
             export MIGRATIONS_DIR=${app}/app/drizzle
             ${nodejs}/bin/node ${app}/app/dist/migrate.mjs
+            if [ "''${DEMO_ACCOUNTS:-false}" = "true" ]; then
+              ${nodejs}/bin/node ${app}/app/dist/seed.mjs
+            fi
             exec ${nodejs}/bin/node ${app}/app/build
           '';
           adminCommand = pkgs.writeShellScriptBin "calhacks-admin" ''
@@ -87,6 +92,12 @@
             extraCommands = ''mkdir -p data tmp; chmod 1777 tmp; chmod 0777 data'';
             config = {
               Cmd = [ "${runner}/bin/calhacks-portal" ];
+              Labels = {
+                "org.opencontainers.image.source" = "https://github.com/youwen5/calhacks-takehome";
+                "org.opencontainers.image.revision" = self.rev or (self.dirtyRev or "unknown");
+                "org.opencontainers.image.title" = "Colmena";
+                "org.opencontainers.image.description" = "Cal Hacks take-home portal: Node monolith with persistent SQLite";
+              };
               WorkingDir = "/data";
               User = "10001:10001";
               ExposedPorts."3000/tcp" = { };

@@ -1,8 +1,8 @@
 name: colmena
 services:
   portal:
-    image: ${PORTAL_IMAGE:-localhost/calhacks-portal:local}
-    pull_policy: never
+    image: ${PORTAL_IMAGE:-ghcr.io/youwen5/calhacks-takehome:latest}
+    pull_policy: missing
     restart: unless-stopped
     stop_grace_period: 30s
     ports:
@@ -16,6 +16,7 @@ services:
       ORIGIN: ${BETTER_AUTH_URL:?Set the public HTTPS origin in .env.production}
       MAIL_MODE: disabled
       DEMO_EMAIL_VERIFICATION: 'true'
+      DEMO_ACCOUNTS: 'true'
     healthcheck:
       test:
         [

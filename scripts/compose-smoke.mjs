@@ -37,7 +37,7 @@ async function ready() {
 try {
   compose(['up', '-d']);
   await ready();
-  let id = compose(['ps', '-q', 'portal']);
+  let id = compose(['ps', '-q']);
   run([
     'exec',
     id,
@@ -45,11 +45,33 @@ try {
     '-e',
     "if(process.env.MAIL_MODE!=='disabled'||process.env.AWS_ACCESS_KEY_ID)process.exit(1);require('node:fs').writeFileSync('/data/compose-test','persistent')",
   ]);
+  run([
+    'exec',
+    id,
+    'node',
+    '-e',
+    `(async()=>{
+    const html=await (await fetch('http://127.0.0.1:3000/events')).text();
+    if(!html.includes('Try the demo')||!html.includes('CalHacks-demo-2026!'))throw Error('Missing demo banner');
+    for(const email of ['manager@example.com','reviewer@example.com','applicant@example.com','jordan@example.com','morgan@example.com']) {
+      const login=()=>fetch('http://127.0.0.1:3000/api/auth/sign-in/email',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://portal.example.test'},body:JSON.stringify({email,password:'CalHacks-demo-2026!'})});
+      let r=await login();
+      if(r.status===429) {
+        const seconds=Number(r.headers.get('retry-after')||r.headers.get('x-retry-after')||10);
+        await r.text();
+        await new Promise(resolve=>setTimeout(resolve,(seconds+1)*1000));
+        r=await login();
+      }
+      if(!r.ok)throw Error('Demo login failed: '+email+' ('+r.status+') '+await r.text());
+      await r.text();
+    }
+  })().catch(e=>{console.error(e);process.exit(1)})`,
+  ]);
   if (engine === 'podman') run(['healthcheck', 'run', id]);
   compose(['stop', 'portal']);
   compose(['up', '-d', '--force-recreate', 'portal']);
   await ready();
-  id = compose(['ps', '-q', 'portal']);
+  id = compose(['ps', '-q']);
   run([
     'exec',
     id,

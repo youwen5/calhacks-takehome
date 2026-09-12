@@ -1,3 +1,5 @@
+import { demoAccounts, demoPassword } from '../src/lib/demo-accounts';
+import { demoAccountsEnabled } from '../src/lib/server/demo';
 import { readFileSync } from 'node:fs';
 import { demoHackerProfile } from './demo-hacker';
 import { demoEvents } from './demo-events';
@@ -8,24 +10,22 @@ import { getAuth } from '../src/lib/server/auth';
 import { portal } from '../src/lib/server/portal';
 import * as s from '../src/lib/server/db/schema';
 
-if (process.env.NODE_ENV === 'production')
-  throw new Error('Demo seeds are local-only. Provision production accounts explicitly.');
+if (process.env.NODE_ENV === 'production' && !demoAccountsEnabled())
+  throw new Error(
+    'Production seeding requires explicit DEMO_ACCOUNTS=true in email-free demo mode.',
+  );
 const db = database();
-migrate(db, { migrationsFolder: './drizzle' });
-const password = process.env.DEMO_PASSWORD || 'CalHacks-demo-2026!';
-const people = [
-  { name: 'Alex Organizer', email: 'manager@example.com' },
-  { name: 'Riley Reviewer', email: 'reviewer@example.com' },
-  { name: 'Sam Rivera', email: 'applicant@example.com' },
-  { name: 'Jordan Chen', email: 'jordan@example.com' },
-  { name: 'Morgan Lee', email: 'morgan@example.com' },
-];
+migrate(db, { migrationsFolder: process.env.MIGRATIONS_DIR || './drizzle' });
+const password = process.env.DEMO_PASSWORD || demoPassword;
+const people = demoAccounts;
 const users: Record<string, string> = {};
 for (const person of people) {
   const existing = db.select().from(s.user).where(eq(s.user.email, person.email)).get();
   if (existing) users[person.email] = existing.id;
   else {
-    const result = await getAuth().api.signUpEmail({ body: { ...person, password } });
+    const result = await getAuth().api.signUpEmail({
+      body: { name: person.name, email: person.email, password },
+    });
     users[person.email] = result.user.id;
     db.update(s.user).set({ emailVerified: true }).where(eq(s.user.id, result.user.id)).run();
   }
@@ -110,6 +110,6 @@ for (const person of people.slice(2)) {
   }
 }
 console.log(
-  'Local demo ready. Accounts: manager@example.com, reviewer@example.com, applicant@example.com',
+  'Demo ready. Accounts: manager@example.com, reviewer@example.com, applicant@example.com',
 );
-console.log('Password: DEMO_PASSWORD if supplied, otherwise the documented local-only default.');
+console.log('Password: DEMO_PASSWORD if supplied, otherwise the documented public demo password.');
