@@ -18,7 +18,12 @@ public endpoint. Optional real email configuration remains in [providers.md](pro
 
 ## Pull the published image
 
-Compose references `ghcr.io/youwen5/calhacks-takehome` and uses `pull_policy: missing`.
+Compose pins the published image below and uses `pull_policy: missing`:
+
+```text
+ghcr.io/youwen5/calhacks-takehome@sha256:91b56e3896375630d28b1b9aacdfd133d7582ec7ad3ed06f8d466d6461a72e6e
+```
+
 The production env example leaves `PORTAL_IMAGE` unset so the checked-in image
 reference is used. The publishing workflow also tags releases with their full Git
 commit and maintains `latest`; prefer the exact digest for a reproducible rollout.
@@ -28,9 +33,10 @@ podman compose --env-file .env.production pull
 podman compose --env-file .env.production up -d
 ```
 
-GitHub initially creates container packages as private. If anonymous pulls are
-not enabled, authenticate on the VPS using a GitHub personal access token (classic)
-with `read:packages`, entering it at the password prompt:
+Anonymous pulls of this published image have been verified; no GitHub credentials
+are needed on this VPS. For a separate private package or fork, authenticate using
+a GitHub personal access token (classic) with `read:packages`, entering it at the
+password prompt:
 
 ```sh
 podman login ghcr.io -u youwen5

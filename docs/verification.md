@@ -197,3 +197,18 @@ the banner. Live development browser checks showed five accounts and no horizont
 overflow at 1440px and 390px. The Nix build performs type checking, unit tests, and
 the production build. No VPS connection or public deployment was performed: the
 public hostname is configured, but an SSH target/access was not supplied.
+
+## Published GHCR image
+
+Source commit `18304e98d3007b36a2592c4af5c49c1a5bd53c6d` was built locally with
+Nix and published by [Publish container](https://github.com/youwen5/calhacks-takehome/actions/runs/34664895670).
+The workflow rebuilt the image, ran both container and Compose smoke checks,
+pushed commit and latest tags, and pulled the resulting digest back from GHCR.
+The anonymous registry manifest returned HTTP 200 with the expected digest;
+Compose now pins that digest. A local Podman pull with an empty authentication
+file also succeeded. No registry credentials are required to pull it.
+The subsequent Compose/documentation pin does not change application code.
+
+```text
+ghcr.io/youwen5/calhacks-takehome@sha256:91b56e3896375630d28b1b9aacdfd133d7582ec7ad3ed06f8d466d6461a72e6e
+```

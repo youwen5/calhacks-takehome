@@ -1,7 +1,7 @@
 name: colmena
 services:
   portal:
-    image: ${PORTAL_IMAGE:-ghcr.io/youwen5/calhacks-takehome:latest}
+    image: ${PORTAL_IMAGE:-ghcr.io/youwen5/calhacks-takehome@sha256:91b56e3896375630d28b1b9aacdfd133d7582ec7ad3ed06f8d466d6461a72e6e}
     pull_policy: missing
     restart: unless-stopped
     stop_grace_period: 30s
