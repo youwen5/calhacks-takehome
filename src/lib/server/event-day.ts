@@ -1,3 +1,4 @@
+import { dietarySummary } from '../domain/hacker';
 import { and, eq, isNull, sql, desc } from 'drizzle-orm';
 import { z } from 'zod';
 import type { PortalDatabase } from './db';
@@ -95,7 +96,29 @@ export function eventDay(db: PortalDatabase, now = Date.now) {
       .orderBy(s.sponsor.name)
       .all();
   }
+  function dietary(q: Q, eventId: string, userId: string) {
+    const profile = q
+      .select()
+      .from(s.hackerProfile)
+      .innerJoin(s.application, eq(s.application.id, s.hackerProfile.applicationId))
+      .where(
+        and(
+          eq(s.application.eventId, eventId),
+          eq(s.application.userId, userId),
+          eq(s.application.status, 'submitted'),
+        ),
+      )
+      .get()?.hacker_profile;
+    return dietarySummary(profile);
+  }
   return {
+    participation(actor: string, slug: string) {
+      const e = portal(db).event(slug, actor);
+      return {
+        accepted: accepted(db, e.id, actor),
+        attendance: attendee(db, e.id, actor) ?? null,
+      };
+    },
     pass(actor: string, slug: string) {
       const e = portal(db).event(slug, actor);
       return {
@@ -103,6 +126,7 @@ export function eventDay(db: PortalDatabase, now = Date.now) {
         accepted: accepted(db, e.id, actor),
         attendance: attendee(db, e.id, actor) ?? null,
         meals: tickets(db, e.id, actor),
+        applicationDietary: dietary(db, e.id, actor),
         sponsors: sponsors(db, e.id, actor),
       };
     },
@@ -205,6 +229,7 @@ export function eventDay(db: PortalDatabase, now = Date.now) {
         accepted: accepted(db, e.id, userId),
         attendance: attendee(db, e.id, userId) ?? null,
         meals: tickets(db, e.id, userId),
+        applicationDietary: dietary(db, e.id, userId),
       };
     },
     checkIn(actor: string, slug: string, userId: string) {
@@ -242,6 +267,7 @@ export function eventDay(db: PortalDatabase, now = Date.now) {
           'Invalid meal.',
           400,
         );
+        requireThat(accepted(q, e.id, userId), 'A published acceptance is required.', 403);
         requireThat(
           attendee(q, e.id, userId)?.checkedInAt,
           'Check in before using meal tickets.',
@@ -382,6 +408,7 @@ export function eventDay(db: PortalDatabase, now = Date.now) {
         const e = event(q, slug);
         active(e);
         sponsor(q, e.id, id);
+        requireThat(accepted(q, e.id, actor), 'A published acceptance is required.', 403);
         requireThat(
           attendee(q, e.id, actor)?.checkedInAt,
           'Check in before redeeming sponsor codes.',

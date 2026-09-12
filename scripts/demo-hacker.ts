@@ -1,0 +1,23 @@
+// Synthetic development data, never sourced from production applicants.
+export const demoHackerProfile = {
+  phoneNumber: '+1 510 555 0100',
+  dateOfBirth: '2004-06-15',
+  shirtSize: 'M',
+  gender: 'Prefer not to answer',
+  ethnicity: 'Prefer not to Answer',
+  levelOfStudy: 'Undergraduate University (3+ year)',
+  gradYear: '2028',
+  major: 'Computer science',
+  skillLevel: 'Beginner',
+  hackathonsAttended: '0',
+  addressLine1: '123 Example Street',
+  addressLine2: '',
+  city: 'Berkeley',
+  state: 'CA',
+  zipCode: '94704',
+  country: 'United States',
+  dietaryVegetarian: true,
+  mlhCodeOfConduct: true,
+  mlhPrivacyPolicy: true,
+  mlhMailingList: false,
+};

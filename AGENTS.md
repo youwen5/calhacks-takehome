@@ -14,8 +14,9 @@ documents record rationale. Implement the acceptance cases in `docs/adversarial-
 The application is implemented in this directory. Use `nix develop` for Node, pnpm,
 Chromium, and SQLite. Run `pnpm check`, `pnpm test`, `pnpm test:e2e`, and `pnpm build`;
 `pnpm format` applies the committed formatter. Nix builds the app and OCI image.
-The current user instruction explicitly prohibits production deployment: prepare
-and locally verify artifacts only. Never describe local smoke tests as deployment.
+The user has now authorized VPS deployment using the Nix-built Node monolith and
+Docker/Podman Compose, without SES or S3. This supersedes the earlier local-only
+limit. Never describe local smoke tests as deployment.
 
 ## Maintainability
 
@@ -114,10 +115,10 @@ applicants and organizers with access to only one event.
 Run type checking, relevant tests, and a production build before calling the app
 ready. Document what ran and any gaps. Keep README setup and demo steps accurate.
 
-The assignment includes a public deployment, but the current implementation
-instruction prohibits production deployment. Prepare and locally verify a runnable
-build and deployment configuration; report the public URL as outstanding rather
-than claiming local checks fulfill it. Do not submit the interview form or contact
+The assignment includes a public deployment. The current user requests VPS/Nix/
+Compose deployment without cloud dependencies. Prepare and verify the artifacts,
+and deploy when the host/access/origin are available; report the public URL as
+outstanding until it is actually reachable. Do not submit the interview form or contact
 organizers unless the user explicitly asks.
 
 Public event pages follow Storke's in-flow landing header and full-height timeline
@@ -155,3 +156,25 @@ The user explicitly requested a demo-only email verification bypass in the banne
 production requires `DEMO_EMAIL_VERIFICATION=true`. The POST endpoint must check
 origin/session and update only the current account. Keep normal verification and
 resend intact, and preserve unsaved application inputs when bypassing.
+
+The user explicitly authorized deleting demo applications for the complete Storke
+hacker-form baseline. No legacy form compatibility is needed. Read
+`docs/hacker-application.md` for fields, source lists, validation, autosave, and reset
+semantics. Preserve accounts/events when resetting demo applications. Keep personal
+profile fields out of admission review responses; only academics belong there.
+
+Attendance confirmation is a separate accepted-only page. Confirmation unlocks the
+pass and sponsor catalog; check-in unlocks meal use and code redemption. Enforce
+page gates on the server and mutation gates inside transactions. Sidebar eligibility
+and the event picker must follow the same event-specific state. Keep the original
+event pass width; the user withdrew the requested width change.
+
+Outside event routes, show attendance/pass/sponsor sidebar links only when the
+user has at least one eligible visible event. Missing event context must never
+default to exposing every applicant destination. On event routes, eligibility
+comes only from that event, regardless of acceptance at another event.
+
+For the VPS demo, Compose explicitly sets MAIL_MODE=disabled and
+DEMO_EMAIL_VERIFICATION=true. Disable auth email callbacks and show accurate UI;
+never pretend reset or verification mail was sent. Development outbox remains
+development-only. SES stays optional for future deployments, not a Compose dependency.

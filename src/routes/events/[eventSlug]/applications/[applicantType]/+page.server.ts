@@ -35,6 +35,14 @@ export const actions: Actions = {
       ),
     );
     if ('status' in result) return fail(result.status, { ...result.data, values });
-    return result;
+    return {
+      ...result,
+      version: number(f, 'version') + 1,
+      savedAt: Date.now(),
+      applicationId: result.result,
+      resume:
+        service().applicant(params.eventSlug, actor.id, params.applicantType).application?.resume ??
+        null,
+    };
   },
 };

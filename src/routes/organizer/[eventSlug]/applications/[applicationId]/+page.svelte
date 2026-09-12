@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { academicFields } from '$lib/domain/hacker';
   import { formDefinition, rubricAnchors } from '$lib/domain/forms';
   import ActionNotice from '$lib/components/ActionNotice.svelte';
   import { onMount } from 'svelte';
@@ -58,6 +59,13 @@
         style="width:100%;height:600px;border:0;margin:16px 0"
       ></iframe>
     {:else}<p class="muted">No resume uploaded.</p>{/if}
+    {#if data.academic}<h3>Academic information</h3>
+      <dl class="academic">
+        {#each academicFields as field}<div>
+            <dt>{field.label}</dt>
+            <dd>{data.academic[field.key] || '—'}</dd>
+          </div>{/each}
+      </dl>{/if}
     <h3>Introduction</h3>
     <p class="prose">{data.application.introduction}</p>
     {#if data.application.link}<p>
@@ -185,5 +193,19 @@
     padding: 12px;
     background: var(--color-background);
     font-size: 14px;
+  }
+
+  .academic {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .academic dt {
+    font-size: 14px;
+    color: var(--color-muted-foreground);
+  }
+  .academic dd {
+    margin: 4px 0 0;
   }
 </style>

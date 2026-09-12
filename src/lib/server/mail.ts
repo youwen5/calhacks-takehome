@@ -1,12 +1,20 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { demoEmailVerificationEnabled } from './demo';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 
 export function mailConfig(env = process.env) {
   const mode = env.MAIL_MODE || (env.NODE_ENV === 'production' ? 'ses' : 'outbox');
-  if (!['ses', 'outbox'].includes(mode)) throw new Error('MAIL_MODE must be ses or outbox.');
-  if (env.NODE_ENV === 'production' && mode !== 'ses')
-    throw new Error('Production requires MAIL_MODE=ses. The local outbox is development-only.');
+  if (!['ses', 'outbox', 'disabled'].includes(mode))
+    throw new Error('MAIL_MODE must be ses, outbox, or disabled.');
+  if (mode === 'disabled' && !demoEmailVerificationEnabled(env))
+    throw new Error(
+      'MAIL_MODE=disabled requires DEMO_EMAIL_VERIFICATION=true so applicants can submit.',
+    );
+  if (env.NODE_ENV === 'production' && mode === 'outbox')
+    throw new Error(
+      'The local outbox is development-only. Use MAIL_MODE=ses or explicit disabled demo mode.',
+    );
   if (mode === 'ses' && (!env.AWS_REGION || !env.AWS_SES_FROM))
     throw new Error(
       'Live mail requires AWS_REGION and a verified AWS_SES_FROM. See docs/providers.md.',
@@ -20,6 +28,7 @@ export function mailConfig(env = process.env) {
 }
 export async function sendAuthEmail(to: string, url: string, kind: 'verify' | 'reset') {
   const config = mailConfig();
+  if (config.mode === 'disabled') throw new Error('Email delivery is disabled for this demo.');
   const subject =
     kind === 'verify'
       ? 'Verify your Cal Hacks Portal email'

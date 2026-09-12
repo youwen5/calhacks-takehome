@@ -107,6 +107,11 @@
     width: 100%;
   }
   dialog {
+    /* Restore native modal centering after the global margin reset. */
+    margin: auto;
+    inset: 0;
+    max-height: calc(100dvh - 32px);
+    overflow: auto;
     max-width: 500px;
     width: calc(100% - 32px);
     padding: 24px;

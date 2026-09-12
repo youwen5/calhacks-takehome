@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, sql } from 'drizzle-orm';
+import { and, eq, isNotNull, sql, getTableColumns } from 'drizzle-orm';
 import type { PortalDatabase } from './db';
 import * as s from './db/schema';
 import { portal, PortalError } from './portal';
@@ -201,6 +201,11 @@ export function reports(db: PortalDatabase, now = Date.now) {
             mentoring: s.mentorAnswer.mentoring,
             availability: s.mentorAnswer.availability,
             resumeFilename: s.resume.filename,
+            ...Object.fromEntries(
+              Object.entries(getTableColumns(s.hackerProfile)).filter(
+                ([key]) => key !== 'applicationId',
+              ),
+            ),
           })
           .from(s.application)
           .innerJoin(s.user, eq(s.user.id, s.application.userId))
@@ -208,6 +213,7 @@ export function reports(db: PortalDatabase, now = Date.now) {
           .leftJoin(s.hackerAnswer, eq(s.hackerAnswer.applicationId, s.application.id))
           .leftJoin(s.mentorAnswer, eq(s.mentorAnswer.applicationId, s.application.id))
           .leftJoin(s.resume, eq(s.resume.applicationId, s.application.id))
+          .leftJoin(s.hackerProfile, eq(s.hackerProfile.applicationId, s.application.id))
           .where(
             and(
               eq(s.application.eventId, event.id),

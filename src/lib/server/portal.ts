@@ -1,3 +1,4 @@
+import { hackerProfileSchema } from '../domain/hacker';
 import { validateResume, type ResumeUpload } from './resume';
 import { eventSchedule } from '../domain/schedule';
 import { and, eq, ne, desc, asc, sql, like, or, inArray } from 'drizzle-orm';
@@ -278,6 +279,13 @@ export function portal(db: PortalDatabase, now: () => number = Date.now) {
             introduction: a.introduction,
             link: a.link,
             ...answers(db, a),
+            ...(a.type === 'hacker'
+              ? db
+                  .select()
+                  .from(s.hackerProfile)
+                  .where(eq(s.hackerProfile.applicationId, a.id))
+                  .get()
+              : {}),
           },
         },
       };
@@ -335,6 +343,19 @@ export function portal(db: PortalDatabase, now: () => number = Date.now) {
           throw new PortalError(400, err instanceof Error ? err.message : 'Invalid answers.');
         }
         if (resumeUpload) validateResume(resumeUpload);
+        if (submit && type === 'hacker')
+          requireThat(
+            !!resumeUpload ||
+              (resumeUpload !== null &&
+                !!existing &&
+                !!q
+                  .select({ id: s.resume.applicationId })
+                  .from(s.resume)
+                  .where(eq(s.resume.applicationId, existing.id))
+                  .get()),
+            400,
+            'Please upload your resume PDF before submitting.',
+          );
         const applicationId = existing?.id ?? id();
         const common = {
           name: data.name,
@@ -404,6 +425,13 @@ export function portal(db: PortalDatabase, now: () => number = Date.now) {
               },
             })
             .run();
+        if ('phoneNumber' in data) {
+          const profile = hackerProfileSchema.parse(data);
+          q.insert(s.hackerProfile)
+            .values({ applicationId, ...profile })
+            .onConflictDoUpdate({ target: s.hackerProfile.applicationId, set: profile })
+            .run();
+        }
         return applicationId;
       });
     },
@@ -756,6 +784,20 @@ export function portal(db: PortalDatabase, now: () => number = Date.now) {
             .where(eq(s.resume.applicationId, a.id))
             .get() ?? null,
         answers: answers(db, a),
+        academic:
+          a.type === 'hacker'
+            ? db
+                .select({
+                  levelOfStudy: s.hackerProfile.levelOfStudy,
+                  gradYear: s.hackerProfile.gradYear,
+                  major: s.hackerProfile.major,
+                  skillLevel: s.hackerProfile.skillLevel,
+                  hackathonsAttended: s.hackerProfile.hackathonsAttended,
+                })
+                .from(s.hackerProfile)
+                .where(eq(s.hackerProfile.applicationId, a.id))
+                .get()
+            : null,
         review: db.select().from(s.review).where(eq(s.review.applicationId, a.id)).get() ?? null,
         claim: currentClaim
           ? {

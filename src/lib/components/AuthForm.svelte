@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/state';
   import { authClient } from '$lib/auth-client';
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
@@ -75,67 +76,73 @@
       <form class="auth-form" method="POST" onsubmit={submit}>
         <h1>{titles[mode]}</h1>
         <noscript>Enable JavaScript to use account authentication.</noscript>
-        <fieldset disabled={!ready || busy}>
-          {#if mode === 'register'}<div class="name-fields">
-              <label
-                >First name<input
-                  name="firstName"
-                  bind:value={name}
-                  autocomplete="given-name"
+        {#if mode === 'forgot' && !page.data.emailEnabled}
+          <p class="auth-message">
+            Password reset is unavailable because this demo does not send email.
+          </p>
+        {:else}
+          <fieldset disabled={!ready || busy}>
+            {#if mode === 'register'}<div class="name-fields">
+                <label
+                  >First name<input
+                    name="firstName"
+                    bind:value={name}
+                    autocomplete="given-name"
+                    required
+                    maxlength="100"
+                  /></label
+                ><label
+                  >Last name<input
+                    name="lastName"
+                    bind:value={lastName}
+                    autocomplete="family-name"
+                    required
+                    maxlength="100"
+                  /></label
+                >
+              </div>{/if}
+            {#if mode !== 'reset'}<label
+                >Email address<input
+                  name="email"
+                  type="email"
+                  bind:value={email}
+                  autocomplete="email"
                   required
-                  maxlength="100"
                 /></label
-              ><label
-                >Last name<input
-                  name="lastName"
-                  bind:value={lastName}
-                  autocomplete="family-name"
+              >{/if}
+            {#if mode !== 'forgot'}<label
+                >Password<input
+                  aria-label="Password"
+                  name="password"
+                  type="password"
+                  bind:value={password}
+                  autocomplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  minlength="12"
+                  maxlength="128"
                   required
-                  maxlength="100"
-                /></label
-              >
-            </div>{/if}
-          {#if mode !== 'reset'}<label
-              >Email address<input
-                name="email"
-                type="email"
-                bind:value={email}
-                autocomplete="email"
-                required
-              /></label
-            >{/if}
-          {#if mode !== 'forgot'}<label
-              >Password<input
-                aria-label="Password"
-                name="password"
-                type="password"
-                bind:value={password}
-                autocomplete={mode === 'login' ? 'current-password' : 'new-password'}
-                minlength="12"
-                maxlength="128"
-                required
-              />{#if mode !== 'login'}<small>At least 12 characters.</small>{/if}</label
-            >{/if}
-          {#if mode === 'login'}<div class="login-options">
-              <label class="remember"
-                ><input type="checkbox" bind:checked={rememberMe} />Remember me</label
-              ><a href="/forgot-password">Forgot Password?</a>
-            </div>{/if}
-          <button type="submit" disabled={busy} aria-busy={busy}
-            >{#if busy}<span class="spinner" aria-hidden="true"></span>{mode === 'login'
-                ? 'Signing in…'
-                : 'Please wait…'}{:else}{mode === 'register'
-                ? 'Create account'
-                : mode === 'login'
-                  ? 'Sign in'
-                  : mode === 'forgot'
-                    ? 'Send reset link'
-                    : 'Update password'}{/if}</button
-          >
-          {#if message}<div class="auth-message" class:error={failed} role="status">
-              {message}
-            </div>{/if}
-        </fieldset>
+                />{#if mode !== 'login'}<small>At least 12 characters.</small>{/if}</label
+              >{/if}
+            {#if mode === 'login'}<div class="login-options">
+                <label class="remember"
+                  ><input type="checkbox" bind:checked={rememberMe} />Remember me</label
+                >{#if page.data.emailEnabled}<a href="/forgot-password">Forgot Password?</a>{/if}
+              </div>{/if}
+            <button type="submit" disabled={busy} aria-busy={busy}
+              >{#if busy}<span class="spinner" aria-hidden="true"></span>{mode === 'login'
+                  ? 'Signing in…'
+                  : 'Please wait…'}{:else}{mode === 'register'
+                  ? 'Create account'
+                  : mode === 'login'
+                    ? 'Sign in'
+                    : mode === 'forgot'
+                      ? 'Send reset link'
+                      : 'Update password'}{/if}</button
+            >
+            {#if message}<div class="auth-message" class:error={failed} role="status">
+                {message}
+              </div>{/if}
+          </fieldset>
+        {/if}
         {#if mode === 'login'}<a class="button secondary" href="/register">New? Create an Account</a
           >{:else}<a class="button secondary" href="/login"
             >{mode === 'register' ? 'Already have an account? Login instead' : 'Back to sign in'}</a

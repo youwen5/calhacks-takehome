@@ -24,7 +24,7 @@ function secret() {
   }
 }
 function createAuth() {
-  mailConfig();
+  const emailEnabled = mailConfig().mode !== 'disabled';
   const baseURL = process.env.BETTER_AUTH_URL || 'http://localhost:5173';
   if (process.env.NODE_ENV === 'production' && !baseURL.startsWith('https://'))
     throw new Error('Production BETTER_AUTH_URL must be your public HTTPS origin.');
@@ -38,16 +38,20 @@ function createAuth() {
       minPasswordLength: 12,
       maxPasswordLength: 128,
       revokeSessionsOnPasswordReset: true,
-      sendResetPassword: async ({ user, url }) => {
-        await sendAuthEmail(user.email, url, 'reset');
-      },
+      sendResetPassword: emailEnabled
+        ? async ({ user, url }) => {
+            await sendAuthEmail(user.email, url, 'reset');
+          }
+        : undefined,
     },
     emailVerification: {
-      sendOnSignUp: true,
+      sendOnSignUp: emailEnabled,
       autoSignInAfterVerification: true,
-      sendVerificationEmail: async ({ user, url }) => {
-        await sendAuthEmail(user.email, url, 'verify');
-      },
+      sendVerificationEmail: emailEnabled
+        ? async ({ user, url }) => {
+            await sendAuthEmail(user.email, url, 'verify');
+          }
+        : undefined,
     },
     rateLimit: { enabled: true, window: 60, max: 30 },
     trustedOrigins: [new URL(baseURL).origin],

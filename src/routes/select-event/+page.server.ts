@@ -1,5 +1,7 @@
+import { eventDay } from '$lib/server/event-day';
+import { database } from '$lib/server/db';
 import { service, signedIn, loadData } from '$lib/server/http';
-import { destinations, canNavigate } from '$lib/navigation';
+import { destinations, applicantDestinationVisible, canNavigate } from '$lib/navigation';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = ({ locals, url }) =>
@@ -13,6 +15,16 @@ export const load: PageServerLoad = ({ locals, url }) =>
     if (!destination) error(400, 'Unknown destination.');
     return {
       destination,
-      events: p.events(actor.id).filter((e) => canNavigate(destination, e.id, access)),
+      events: p
+        .events(actor.id)
+        .filter(
+          (e) =>
+            canNavigate(destination, e.id, access) &&
+            (destination.scope !== 'applicant' ||
+              applicantDestinationVisible(
+                destination.key,
+                eventDay(database()).participation(actor.id, e.slug),
+              )),
+        ),
     };
   });

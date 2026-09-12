@@ -1,19 +1,32 @@
+name: colmena
 services:
   portal:
-    image: calhacks-portal:local
+    image: ${PORTAL_IMAGE:-localhost/calhacks-portal:local}
+    pull_policy: never
     restart: unless-stopped
+    stop_grace_period: 30s
     ports:
-      - '127.0.0.1:3000:3000'
+      - '127.0.0.1:${PORTAL_PORT:-3000}:3000'
     volumes:
-      - ./portal-data:/data
+      - portal-data:/data
     environment:
       DATABASE_PATH: /data/portal.db
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET}
-      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?Set the public HTTPS URL}
-      ORIGIN: ${BETTER_AUTH_URL:?Set the public HTTPS URL}
-      MAIL_MODE: ses
-      AWS_REGION: ${AWS_REGION:?Set AWS_REGION}
-      AWS_SES_FROM: ${AWS_SES_FROM:?Set a verified sender}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
-      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env.production}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:?Set the public HTTPS origin in .env.production}
+      ORIGIN: ${BETTER_AUTH_URL:?Set the public HTTPS origin in .env.production}
+      MAIL_MODE: disabled
+      DEMO_EMAIL_VERIFICATION: 'true'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/events').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+volumes:
+  portal-data:

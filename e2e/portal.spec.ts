@@ -22,6 +22,31 @@ async function login(page: Page, email: string, password = 'CalHacks-demo-2026!'
   }
   await page.waitForURL('**/events');
 }
+async function choose(page: Page, label: string, search: string, option: string) {
+  const input = page.getByRole('combobox', { name: label, exact: true });
+  await input.fill(search);
+  await page.getByRole('option', { name: option, exact: true }).click();
+}
+async function fillHacker(page: Page) {
+  await page.getByLabel('Phone Number', { exact: true }).fill('+1 510 555 0101');
+  await page.getByLabel('Date of Birth', { exact: true }).fill('2004-06-15');
+  await choose(page, 'Gender', 'prefer', 'Prefer not to answer');
+  await choose(page, 'Ethnicity', 'prefer', 'Prefer not to Answer');
+  await page.getByRole('radio', { name: 'M', exact: true }).check();
+  await choose(page, 'University', 'berkeley', 'University of California, Berkeley');
+  await choose(page, 'Level of Study', '3+', 'Undergraduate University (3+ year)');
+  await choose(page, 'Graduation Year', '2028', '2028');
+  await choose(page, 'Major', 'computer science', 'Computer science');
+  await page.getByRole('radio', { name: 'Beginner', exact: true }).check();
+  await page.getByLabel('Hackathons Attended', { exact: true }).fill('0');
+  await page.getByLabel('Address Line 1', { exact: true }).fill('123 Example Street');
+  await page.getByLabel('City', { exact: true }).fill('Berkeley');
+  await page.getByLabel('State/Province', { exact: true }).fill('CA');
+  await page.getByLabel('ZIP / Postal Code', { exact: true }).fill('94704');
+  await page.getByLabel('Country', { exact: true }).fill('United States');
+  await page.getByRole('checkbox', { name: /I have read and agree/ }).check();
+  await page.getByRole('checkbox', { name: /I authorize sharing/ }).check();
+}
 function emailLink(email: string, subject: string) {
   const directory = './data/e2e/outbox';
   return readdirSync(directory)
@@ -118,20 +143,20 @@ test('registration, local verification, two forms, organizer review, gated waitl
   await applicant.goto(verify);
   await applicant.waitForURL('**/events');
   await applicant.goto('/events/cal-hacks-fall/applications/hacker');
-  await applicant.getByLabel('School or organization').fill('Browser University');
+  await fillHacker(applicant);
   await applicant
     .getByLabel('A short introduction')
     .fill('I am here to learn and build alongside others.');
   await applicant
-    .getByLabel('What are you curious about?')
+    .getByLabel('Why do you want to attend Cal Hacks?')
     .fill('Accessible software for community gardens.');
   await applicant
-    .getByLabel('Tell us about something you tried')
+    .getByLabel('Tell us about a technical challenge you’ve overcome')
     .fill('A small sensor experiment with friends.');
   await applicant
-    .getByLabel('What would you like to build or learn?')
+    .getByLabel('What do you hope to build or learn?')
     .fill('Learn to design a welcoming interface.');
-  await applicant.getByLabel('Resume PDF (optional)').setInputFiles('tests/fixtures/resume.pdf');
+  await applicant.getByLabel('Resume PDF (required)').setInputFiles('tests/fixtures/resume.pdf');
   await applicant.getByRole('button', { name: 'Save draft' }).click();
   await expect(applicant.getByRole('status')).toContainText('saved');
   await expect(applicant.getByTitle('Your resume PDF')).toBeVisible();
@@ -142,7 +167,9 @@ test('registration, local verification, two forms, organizer review, gated waitl
   expect(resumeResponse.status()).toBe(200);
   expect(await resumeResponse.body()).toEqual(readFileSync('tests/fixtures/resume.pdf'));
   await applicant.reload();
-  await expect(applicant.getByLabel('School or organization')).toHaveValue('Browser University');
+  await expect(applicant.getByRole('combobox', { name: 'University', exact: true })).toHaveValue(
+    'University of California, Berkeley',
+  );
   await applicant.getByRole('button', { name: 'Submit application' }).click();
   await expect(applicant.getByText('Your submitted answers are locked')).toBeVisible();
   await applicant.goto('/events/cal-hacks-fall/applications/mentor');
@@ -256,15 +283,19 @@ test('a stale browser tab preserves its input without overwriting the saved draf
   const url = '/events/cal-hacks-spring/applications/hacker';
   await first.goto(url);
   await second.goto(url);
-  await first.getByLabel('School or organization').fill('Saved by first tab');
-  await second.getByLabel('School or organization').fill('Unsaved second tab');
+  await choose(first, 'University', 'berkeley', 'University of California, Berkeley');
+  await choose(second, 'University', 'acadia', 'Acadia University');
   await first.getByRole('button', { name: 'Save draft' }).click();
   await expect(first.getByRole('status')).toContainText('saved');
   await second.getByRole('button', { name: 'Save draft' }).click();
   await expect(second.getByRole('alert')).toContainText('another tab');
-  await expect(second.getByLabel('School or organization')).toHaveValue('Unsaved second tab');
+  await expect(second.getByRole('combobox', { name: 'University', exact: true })).toHaveValue(
+    'Acadia University',
+  );
   await first.reload();
-  await expect(first.getByLabel('School or organization')).toHaveValue('Saved by first tab');
+  await expect(first.getByRole('combobox', { name: 'University', exact: true })).toHaveValue(
+    'University of California, Berkeley',
+  );
   await context.close();
 });
 
@@ -445,12 +476,34 @@ test('event pass QR, staff admission, meals and sponsor redemption work end to e
 }) => {
   test.setTimeout(120_000);
   await login(page, 'jordan@example.com');
-  await page.goto('/events/cal-hacks-fall/check-in');
+  await expect(page.getByRole('link', { name: 'Confirm attendance', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Event pass & meals', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Sponsor codes', exact: true })).toHaveCount(0);
+  await page.goto('/events/cal-hacks-spring');
+  await expect(page.getByRole('link', { name: 'Confirm attendance', exact: true })).toHaveCount(0);
+  await page.goto('/events/cal-hacks-fall/codes');
+  await expect(page).toHaveURL(/confirm-attendance$/);
+  await expect(page.getByRole('link', { name: 'Event pass & meals', exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole('img', { name: 'QR code for check-in and meal ticketing' }),
+  ).toHaveCount(0);
   await page.getByLabel('Dietary restrictions (optional)').fill('Vegetarian');
   await page.getByRole('button', { name: 'Confirm attendance', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Confirm attendance', exact: true })).toHaveCount(
     0,
   );
+  await expect(page).toHaveURL(/check-in$/);
+  await expect(page.getByRole('link', { name: 'Confirm attendance', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Sponsor codes', exact: true })).toBeVisible();
+  await page.goto('/events');
+  await expect(page.getByRole('link', { name: 'Confirm attendance', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Event pass & meals', exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Sponsor codes', exact: true })).toBeVisible();
+  await page.goto('/events/cal-hacks-fall/codes');
+  await expect(
+    page.getByText('Check in at the event before redeeming sponsor codes.'),
+  ).toBeVisible();
+  await page.goto('/events/cal-hacks-fall/check-in');
   const qr = page.getByRole('img', { name: 'QR code for check-in and meal ticketing' });
   await expect(qr).toBeVisible();
   const source = await qr.getAttribute('src');
@@ -543,8 +596,8 @@ test('demo verification preserves unsaved answers and verifies only the signed-i
   await page.getByRole('button', { name: 'Create account' }).click();
   await page.waitForURL('**/events');
   await page.goto('/events/cal-hacks-fall/applications/hacker');
-  await page.getByLabel('School or organization').fill('Unsaved University');
-  await page.getByLabel('Resume PDF (optional)').setInputFiles('tests/fixtures/resume.pdf');
+  await fillHacker(page);
+  await page.getByLabel('Resume PDF (required)').setInputFiles('tests/fixtures/resume.pdf');
   // An expired session may redirect fetch to a successful HTML login response.
   await page.route('**/api/demo/verify-email', (route) =>
     route.fulfill({ status: 200, contentType: 'text/html', body: '<html>Sign in</html>' }),
@@ -556,19 +609,126 @@ test('demo verification preserves unsaved answers and verifies only the signed-i
   await expect(
     page.getByText('Verify your email before submitting.', { exact: false }),
   ).toHaveCount(0);
-  await expect(page.getByLabel('School or organization')).toHaveValue('Unsaved University');
+  await expect(page.getByRole('combobox', { name: 'University', exact: true })).toHaveValue(
+    'University of California, Berkeley',
+  );
   await page.getByRole('button', { name: 'Save draft', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('saved');
   await page.reload();
   await expect(
     page.getByRole('button', { name: 'Bypass email verification (demo)', exact: true }),
   ).toHaveCount(0);
-  await expect(page.getByLabel('School or organization')).toHaveValue('Unsaved University');
+  await expect(page.getByRole('combobox', { name: 'University', exact: true })).toHaveValue(
+    'University of California, Berkeley',
+  );
   await expect(page.getByTitle('Your resume PDF')).toBeVisible();
   await page.getByLabel('A short introduction').fill('I enjoy building with friends.');
-  await page.getByLabel('What are you curious about?').fill('Community software');
-  await page.getByLabel('Tell us about something you tried').fill('A small garden sensor');
-  await page.getByLabel('What would you like to build or learn?').fill('Collaborative design');
+  await page.getByLabel('Why do you want to attend Cal Hacks?').fill('Community software');
+  await page
+    .getByLabel('Tell us about a technical challenge you’ve overcome')
+    .fill('A small garden sensor');
+  await page.getByLabel('What do you hope to build or learn?').fill('Collaborative design');
   await page.getByRole('button', { name: 'Submit application' }).click();
   await expect(page.getByText('Your submitted answers are locked')).toBeVisible();
+});
+
+test('searchable hacker selectors support keyboard input, autosave and dietary review', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await login(page, 'applicant@example.com');
+  await page.goto('/events/cal-hacks-spring/applications/hacker');
+  const school = page.getByRole('combobox', { name: 'University', exact: true });
+  await school.fill('not-a-real-university-zzzz');
+  await expect(page.getByText('No matches. Try another search.')).toBeVisible();
+  await school.fill('UC Berkeley');
+  await school.press('Enter');
+  await expect(school).toHaveValue('University of California, Berkeley');
+  const major = page.getByRole('combobox', { name: 'Major', exact: true });
+  await major.fill('computer science');
+  await major.press('ArrowDown');
+  await major.press('ArrowUp');
+  await major.press('Enter');
+  await expect(major).toHaveValue('Computer science');
+  await page.getByRole('checkbox', { name: 'Nut Allergy', exact: true }).check();
+  await page.getByLabel('Additional Dietary Information').fill('Avoid tree nuts.');
+  let releaseResponse!: () => void, signalSaved!: () => void;
+  const held = new Promise<void>((resolve) => (releaseResponse = resolve));
+  const saved = new Promise<void>((resolve) => (signalSaved = resolve));
+  await page.route(
+    '**/events/cal-hacks-spring/applications/hacker',
+    async (route) => {
+      if (route.request().method() !== 'POST') return route.continue();
+      const response = await route.fetch();
+      signalSaved();
+      await held;
+      await route.fulfill({ response });
+    },
+    { times: 1 },
+  );
+  await saved;
+  await page
+    .getByLabel('Additional Dietary Information')
+    .fill('Avoid tree nuts. Updated while saving.');
+  releaseResponse();
+  await expect(page.getByRole('status')).toHaveText('Draft saved.', { timeout: 22000 });
+  await expect(page.getByLabel('Additional Dietary Information')).toHaveValue(
+    'Avoid tree nuts. Updated while saving.',
+  );
+  await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await expect(page.getByRole('status')).toHaveText('Draft saved.');
+  await page.reload();
+  await expect(page.getByRole('combobox', { name: 'Major', exact: true })).toHaveValue(
+    'Computer science',
+  );
+  await expect(page.getByRole('checkbox', { name: 'Nut Allergy', exact: true })).toBeChecked();
+  await expect(page.getByLabel('Additional Dietary Information')).toHaveValue(
+    'Avoid tree nuts. Updated while saving.',
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await school.fill('berkeley');
+  await expect(
+    page.getByRole('option', { name: 'University of California, Berkeley', exact: true }),
+  ).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await school.press('Escape');
+  const radios = await page
+    .getByRole('group', { name: 'Technical Skill Level', exact: true })
+    .getByRole('radio')
+    .evaluateAll((inputs) =>
+      inputs.map((input) => ({
+        width: input.getBoundingClientRect().width,
+        height: input.getBoundingClientRect().height,
+        alignment: getComputedStyle(input.parentElement!).justifyContent,
+      })),
+    );
+  expect(radios).toEqual(Array(3).fill({ width: 17, height: 17, alignment: 'flex-start' }));
+  await page.screenshot({ path: '/tmp/colmena-hacker-mobile.png', fullPage: true });
+});
+
+test('unaccepted applicants cannot open attendance, passes or sponsor pages', async ({ page }) => {
+  await login(page, 'applicant@example.com');
+  for (const path of [
+    '/events',
+    '/select-event?for=applications',
+    '/events/cal-hacks-fall',
+    '/events/cal-hacks-spring',
+  ]) {
+    await page.goto(path);
+    for (const name of ['Confirm attendance', 'Event pass & meals', 'Sponsor codes']) {
+      await expect(page.getByRole('link', { name, exact: true })).toHaveCount(0);
+    }
+    await expect(page.getByRole('link', { name: 'My applications', exact: true })).toBeVisible();
+  }
+  for (const path of ['confirm-attendance', 'check-in', 'codes']) {
+    await page.goto('/events/cal-hacks-fall/' + path);
+    await expect(page).toHaveURL(/cal-hacks-fall\/applications$/);
+    await expect(page.getByRole('link', { name: 'Confirm attendance', exact: true })).toHaveCount(
+      0,
+    );
+    await expect(page.getByRole('link', { name: 'Event pass & meals', exact: true })).toHaveCount(
+      0,
+    );
+    await expect(page.getByRole('link', { name: 'Sponsor codes', exact: true })).toHaveCount(0);
+  }
 });

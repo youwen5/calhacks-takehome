@@ -111,3 +111,12 @@ from those reference pages. Authorization/storage are new event-scoped code;
 Storke’s production database and vendor code inventory were not copied.
 See event-day.md for intentional differences and setup. qrcode (MIT) and
 qr-scanner (MIT) are direct dependencies, with licenses retained in dependencies.
+
+## Complete hacker application
+
+The user requested all missing Storke hacker fields. Copied the full Schools, Majors,
+GradYearOptions, LevelOfStudy, ShirtSizes, Genders and EthnicityOptions arrays into
+src/lib/options. Reused dietary choices, essay prompts (with Cal Hacks branding),
+MLH acknowledgements, and the 15-second autosave interaction. SearchSelect is a new
+small native Svelte combobox rather than Storke’s Fuse/Superforms wrapper stack.
+See hacker-application.md for field mapping, preserved data boundaries and deviations.

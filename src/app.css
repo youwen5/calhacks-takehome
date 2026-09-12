@@ -176,7 +176,7 @@ button.danger {
   outline: 3px solid var(--color-ring);
   outline-offset: 3px;
 }
-input:not([type='checkbox']),
+input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
 select,
 textarea {
   display: block;
@@ -201,10 +201,15 @@ label {
   font-weight: 600;
   margin: 1.1rem 0;
 }
-input[type='checkbox'] {
+input[type='checkbox'],
+input[type='radio'] {
   accent-color: var(--color-primary);
   width: 17px;
   height: 17px;
+  min-height: 0;
+  flex: 0 0 17px;
+  padding: 0;
+  margin: 0;
 }
 h1,
 h2,

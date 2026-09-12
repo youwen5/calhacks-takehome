@@ -36,6 +36,13 @@
       "when": 1789169079654,
       "tag": "0004_zippy_puff_adder",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1789171251823,
+      "tag": "0005_confused_black_tarantula",
+      "breakpoints": true
     }
   ]
 }

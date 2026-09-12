@@ -149,8 +149,8 @@
           class:current={page.url.pathname === '/events/' + selectedEvent.slug}
           ><Icon name="calendar" />Event info</a
         >{/if}
-      <div class="nav-section">Applications</div>
-      {#each destinations.filter((d) => d.scope === 'applicant') as destination}
+      <div class="nav-section">Event</div>
+      {#each destinations.filter((d) => d.scope === 'applicant' && data.applicantNavigation.includes(d.key)) as destination}
         <a
           href={navHref(destination)}
           class:current={isCurrent(destination)}

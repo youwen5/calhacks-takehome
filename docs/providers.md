@@ -1,7 +1,17 @@
 # Authentication email and credentials
 
 The portal sends verification and password-reset messages. Admission decisions are
-published in the portal; they do not send email. File uploads and S3 are not used.
+published in the portal; they do not send email. PDF uploads are stored in SQLite; S3 is not used.
+
+## VPS demo without an email provider
+
+The supplied Compose file sets `MAIL_MODE=disabled` and
+`DEMO_EMAIL_VERIFICATION=true`. No email is sent or written to an outbox.
+Registration does not attempt delivery; applicants explicitly use the demo bypass.
+Password reset and verification resend callbacks are disabled, and the UI explains
+that email is unavailable. Password recovery by email is unavailable in this mode;
+retain your login credentials. Do not expose a public outbox or reset links.
+For real mailbox verification/recovery, opt into the SES configuration below.
 
 ## Local development without credentials
 
@@ -77,7 +87,7 @@ permissions. See [SES access controls](https://docs.aws.amazon.com/ses/latest/dg
 | `DATABASE_PATH`                               | `./data/portal.db`; container uses `/data/portal.db`               |
 | `BETTER_AUTH_URL`                             | `http://localhost:5173`; actual HTTPS public origin in production  |
 | `BETTER_AUTH_SECRET`                          | Generated local secret; production requires at least 32 characters |
-| `MAIL_MODE`                                   | `outbox` locally; production requires `ses`                        |
+| `MAIL_MODE`                                   | `outbox` locally; `disabled` for the VPS demo; `ses` for live mail |
 | `OUTBOX_DIR`                                  | `./data/outbox`; used only by local outbox mode                    |
 | `AWS_REGION`                                  | Required for SES; must match the verified identity                 |
 | `AWS_SES_FROM`                                | Required for SES; your verified sender email                       |

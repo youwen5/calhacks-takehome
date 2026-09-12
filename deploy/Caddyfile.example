@@ -1,0 +1,4 @@
+# Run Caddy on the VPS host. Point this hostname's DNS to the VPS first.
+calhacks.youwen.dev {
+  reverse_proxy 127.0.0.1:3000
+}

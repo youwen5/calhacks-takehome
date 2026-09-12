@@ -50,7 +50,11 @@
       </p>{/if}
     <div class="dietary">
       <h3>Dietary restrictions</h3>
-      <p class="prose">{data.attendance?.dietary || 'None specified'}</p>
+      <p class="prose">
+        {[...new Set([data.applicationDietary, data.attendance?.dietary].filter(Boolean))].join(
+          '; ',
+        ) || 'None specified'}
+      </p>
     </div>
   </section>
 

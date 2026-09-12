@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { demoHackerProfile } from './demo-hacker';
 import { demoEvents } from './demo-events';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { eq } from 'drizzle-orm';
@@ -57,7 +59,8 @@ for (const { slug, name, offset, description, venue } of demoEvents) {
 }
 const answers = {
   name: 'Sam Rivera',
-  organization: 'UC Berkeley',
+  organization: 'University of California, Berkeley',
+  ...demoHackerProfile,
   introduction: 'I’m a curious builder who enjoys turning small observations into useful projects.',
   link: 'https://example.com',
   interests: 'Accessible creative tools and community projects.',
@@ -74,6 +77,10 @@ for (const person of people.slice(2)) {
     0,
     { ...answers, name: person.name },
     true,
+    {
+      filename: 'demo-resume.pdf',
+      bytes: readFileSync(new URL('./fixtures/demo-resume.pdf', import.meta.url)),
+    },
   );
   if (person.email !== 'morgan@example.com') {
     const c = p.claim(reviewer, 'cal-hacks-fall', a, 'acquire')!;

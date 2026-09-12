@@ -385,3 +385,40 @@ export const sponsorCode = sqliteTable(
   },
   (t) => [uniqueIndex('one_code_per_sponsor_user').on(t.sponsorId, t.redeemedBy)],
 );
+
+// Operational/demographic details are separate from admission-review responses.
+export const hackerProfile = sqliteTable('hacker_profile', {
+  applicationId: text()
+    .primaryKey()
+    .references(() => hackerAnswer.applicationId),
+  phoneNumber: text().notNull().default(''),
+  dateOfBirth: text().notNull().default(''),
+  shirtSize: text().notNull().default(''),
+  gender: text().notNull().default(''),
+  ethnicity: text().notNull().default(''),
+  levelOfStudy: text().notNull().default(''),
+  gradYear: text().notNull().default(''),
+  major: text().notNull().default(''),
+  skillLevel: text().notNull().default(''),
+  hackathonsAttended: text().notNull().default(''),
+  addressLine1: text().notNull().default(''),
+  addressLine2: text().notNull().default(''),
+  city: text().notNull().default(''),
+  state: text().notNull().default(''),
+  zipCode: text().notNull().default(''),
+  country: text().notNull().default(''),
+  dietaryAdditionalDetails: text().notNull().default(''),
+  dietaryVegetarian: integer({ mode: 'boolean' }).notNull().default(false),
+  dietaryVegan: integer({ mode: 'boolean' }).notNull().default(false),
+  dietaryGlutenFree: integer({ mode: 'boolean' }).notNull().default(false),
+  dietaryDairyFree: integer({ mode: 'boolean' }).notNull().default(false),
+  dietaryNutAllergy: integer({ mode: 'boolean' }).notNull().default(false),
+  dietaryShellfishAllergy: integer({ mode: 'boolean' }).notNull().default(false),
+  dietaryKosher: integer({ mode: 'boolean' }).notNull().default(false),
+  dietaryHalal: integer({ mode: 'boolean' }).notNull().default(false),
+  dietaryPescatarian: integer({ mode: 'boolean' }).notNull().default(false),
+  dietaryOther: integer({ mode: 'boolean' }).notNull().default(false),
+  mlhCodeOfConduct: integer({ mode: 'boolean' }).notNull().default(false),
+  mlhPrivacyPolicy: integer({ mode: 'boolean' }).notNull().default(false),
+  mlhMailingList: integer({ mode: 'boolean' }).notNull().default(false),
+});

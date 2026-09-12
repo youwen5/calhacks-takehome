@@ -22,7 +22,8 @@
     "db:backup": "node --env-file-if-exists=.env --import tsx scripts/backup.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test:container": "node scripts/container-smoke.mjs"
+    "test:container": "node scripts/container-smoke.mjs",
+    "demo:reset-applications": "node --env-file-if-exists=.env --import tsx scripts/reset-applications.ts"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "3.1129.0",

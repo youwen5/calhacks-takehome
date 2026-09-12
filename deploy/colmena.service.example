@@ -1,0 +1,17 @@
+# Install as ~/.config/systemd/user/colmena.service on the VPS.
+# Keep compose.yaml and .env.production in ~/colmena, or change WorkingDirectory.
+[Unit]
+Description=Colmena portal (Podman Compose)
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=%h/colmena
+Environment=PATH=/run/current-system/sw/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/usr/bin/env podman compose --env-file .env.production up -d
+ExecStop=/usr/bin/env podman compose --env-file .env.production stop
+TimeoutStartSec=120
+TimeoutStopSec=60
+
+[Install]
+WantedBy=default.target

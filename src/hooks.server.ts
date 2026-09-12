@@ -1,3 +1,4 @@
+import { mailConfig } from '$lib/server/mail';
 import { building, dev } from '$app/environment';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import type { Handle, ServerInit } from '@sveltejs/kit';
@@ -40,6 +41,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   // Public resend must not reveal account existence through provider failures.
   // Signed-in applicants retain actionable delivery errors for their own address.
   if (
+    mailConfig().mode !== 'disabled' &&
     !event.locals.user &&
     event.url.pathname === '/api/auth/send-verification-email' &&
     event.request.method === 'POST' &&

@@ -1,3 +1,5 @@
+import { demoHackerProfile } from '../scripts/demo-hacker';
+import { readFileSync } from 'node:fs';
 import { eventDay } from '../src/lib/server/event-day';
 import { scannedUser } from '../src/lib/domain/event-day';
 import { reports, toCsv } from '../src/lib/server/reports';
@@ -15,14 +17,16 @@ import { join } from 'node:path';
 let connection: ReturnType<typeof connect>;
 let p: ReturnType<typeof portal>;
 let time: number;
+const testResume = { filename: 'resume.pdf', bytes: readFileSync('tests/fixtures/resume.pdf') };
 const common = {
   name: 'Sam Builder',
-  organization: 'Berkeley',
+  organization: 'University of California, Berkeley',
   introduction: 'I love learning with other people.',
   link: 'https://example.com',
 };
 const hacker = {
   ...common,
+  ...demoHackerProfile,
   interests: 'Creative computing',
   experience: 'Built a garden sensor',
   ambition: 'Learn from a team',
@@ -35,7 +39,15 @@ const mentor = {
 };
 const grades = { score1: 3, score2: 4, score3: 5, notes: 'Thoughtful response.' };
 function submit(actor = 'applicant', type: 'hacker' | 'mentor' = 'hacker', slug = 'fall') {
-  return p.saveApplication(slug, actor, type, 0, type === 'hacker' ? hacker : mentor, true);
+  return p.saveApplication(
+    slug,
+    actor,
+    type,
+    0,
+    type === 'hacker' ? hacker : mentor,
+    true,
+    type === 'hacker' ? testResume : undefined,
+  );
 }
 function complete(applicationId: string, actor = 'reviewer', slug = 'fall') {
   const claim = p.claim(actor, slug, applicationId, 'acquire')!;
@@ -118,13 +130,13 @@ describe('applications and event isolation', () => {
     expect(() => p.reviewDetail('reviewer', 'fall', ids[2])).toThrow('not found');
   });
   it('preserves drafts, rejects stale creation/save/submission, and locks submission', () => {
-    p.saveApplication('fall', 'applicant', 'hacker', 0, { ...hacker, ambition: '' }, false);
+    p.saveApplication('fall', 'applicant', 'hacker', 0, { ...hacker, phoneNumber: '' }, false);
     expect(p.applicant('fall', 'applicant', 'hacker').application?.status).toBe('draft');
     expect(() => submit()).toThrow('another tab');
     expect(() =>
-      p.saveApplication('fall', 'applicant', 'hacker', 1, { ...hacker, ambition: '' }, true),
-    ).toThrow('ambition');
-    p.saveApplication('fall', 'applicant', 'hacker', 1, hacker, true);
+      p.saveApplication('fall', 'applicant', 'hacker', 1, { ...hacker, phoneNumber: '' }, true),
+    ).toThrow('phone number');
+    p.saveApplication('fall', 'applicant', 'hacker', 1, hacker, true, testResume);
     expect(() => p.saveApplication('fall', 'applicant', 'hacker', 2, hacker, false)).toThrow(
       'another tab',
     );
@@ -133,7 +145,7 @@ describe('applications and event isolation', () => {
     const a = p.saveApplication('fall', 'applicant', 'hacker', 0, hacker, false);
     expect(p.queue('manager', 'fall').rows[0].submission).toBe('draft');
     expect(() => p.reviewDetail('manager', 'fall', a)).toThrow('private');
-    p.saveApplication('fall', 'applicant', 'hacker', 1, hacker, true);
+    p.saveApplication('fall', 'applicant', 'hacker', 1, hacker, true, testResume);
     complete(a);
     prepare(a);
     const response = JSON.stringify(p.applicant('fall', 'applicant', 'hacker'));
@@ -142,7 +154,9 @@ describe('applications and event isolation', () => {
     expect(response).not.toContain('reviewVersion');
   });
   it('enforces type-specific answers, verification, and safe URLs', () => {
-    expect(() => p.saveApplication('fall', 'applicant', 'mentor', 0, hacker, true)).toThrow();
+    expect(() =>
+      p.saveApplication('fall', 'applicant', 'mentor', 0, hacker, true, testResume),
+    ).toThrow();
     expect(() =>
       p.saveApplication(
         'fall',
@@ -211,7 +225,7 @@ describe('applications and event isolation', () => {
         });
       });
       expect(() =>
-        localPortal.saveApplication('fall', 'applicant', 'hacker', 0, hacker, true),
+        localPortal.saveApplication('fall', 'applicant', 'hacker', 0, hacker, true, testResume),
       ).toThrow('window');
       expect(localPortal.applicant('fall', 'applicant', 'hacker').application).toBeNull();
     } finally {
@@ -313,6 +327,7 @@ describe('review claims', () => {
         draft.version,
         hacker,
         true,
+        testResume,
       );
       const claims = await race(
         ['reviewer', 'manager'].map(
@@ -679,6 +694,13 @@ describe('event-day admission, meals and sponsor codes', () => {
     });
     const correction = prepare(id, 'rejected', 1);
     p.publish('manager', 'fall', p.createRelease('manager', 'fall', [correction]));
+    expect(d.participation('applicant', 'fall').accepted).toBe(false);
+    expect(() => d.meal('reviewer', 'fall', 'applicant', 'lunch', true, 0)).toThrow(
+      'published acceptance',
+    );
+    const sponsorId = d.createSponsor('manager', 'fall', 'Revoked access');
+    d.addCodes('manager', 'fall', sponsorId, 'PRIVATE');
+    expect(() => d.redeem('applicant', 'fall', sponsorId)).toThrow('published acceptance');
     expect(d.pass('applicant', 'fall').accepted).toBe(false);
     expect(d.roster('reviewer', 'fall').people[0].accepted).toBe(false);
     expect(() => d.checkIn('reviewer', 'fall', 'applicant')).toThrow('published acceptance');
@@ -833,4 +855,102 @@ it('allocates the last sponsor code once across independent SQLite writers', asy
     local.sqlite.close();
     rmSync(directory, { recursive: true, force: true });
   }
+});
+
+describe('complete hacker application', () => {
+  it('validates selections, dates, acknowledgements and the required PDF on submission', () => {
+    const invalid = [
+      { organization: 'Invented school' },
+      { major: 'Invented major' },
+      { dateOfBirth: '2004-02-30' },
+      { dateOfBirth: '2099-01-01' },
+      { hackathonsAttended: '-1' },
+      { hackathonsAttended: '1.5' },
+      { mlhCodeOfConduct: false },
+      { mlhPrivacyPolicy: false },
+    ];
+    for (const patch of invalid)
+      expect(() =>
+        p.saveApplication(
+          'fall',
+          'applicant',
+          'hacker',
+          0,
+          { ...hacker, ...patch },
+          true,
+          testResume,
+        ),
+      ).toThrow();
+    expect(() => p.saveApplication('fall', 'applicant', 'hacker', 0, hacker, true)).toThrow(
+      'resume PDF',
+    );
+    expect(p.applicant('fall', 'applicant', 'hacker').application).toBeNull();
+    // Storke essays and mailing-list consent are optional; postal codes need not be US ZIPs.
+    const a = p.saveApplication(
+      'fall',
+      'applicant',
+      'hacker',
+      0,
+      {
+        ...hacker,
+        interests: '',
+        experience: '',
+        ambition: '',
+        introduction: '',
+        mlhMailingList: false,
+        zipCode: 'SW1A 1AA',
+        country: 'United Kingdom',
+      },
+      true,
+      testResume,
+    );
+    expect(p.applicant('fall', 'applicant', 'hacker').application?.answers).toMatchObject({
+      major: 'Computer science',
+      dietaryVegetarian: true,
+      mlhMailingList: false,
+    });
+    const view = p.reviewDetail('reviewer', 'fall', a);
+    expect(view.academic).toMatchObject({ major: 'Computer science', hackathonsAttended: '0' });
+    expect(JSON.stringify(view)).not.toContain('123 Example Street');
+    expect(JSON.stringify(view)).not.toContain('2004-06-15');
+    const exported = reports(connection.db).export('manager', 'fall', 'applications');
+    expect(exported[0]).toMatchObject({
+      major: 'Computer science',
+      phoneNumber: '+1 510 555 0100',
+      dietaryVegetarian: true,
+      zipCode: 'SW1A 1AA',
+    });
+    expect(eventDay(connection.db).detail('reviewer', 'fall', 'applicant').applicationDietary).toBe(
+      'Vegetarian',
+    );
+  });
+  it('keeps partial profile drafts private and preserves them through versioned updates', () => {
+    const a = p.saveApplication(
+      'fall',
+      'applicant',
+      'hacker',
+      0,
+      { ...hacker, phoneNumber: '123', major: '', mlhCodeOfConduct: false },
+      false,
+    );
+    expect(p.applicant('fall', 'applicant', 'hacker').application?.answers).toMatchObject({
+      phoneNumber: '123',
+      major: '',
+      mlhCodeOfConduct: false,
+    });
+    expect(() => p.reviewDetail('reviewer', 'fall', a)).toThrow('private');
+    expect(reports(connection.db).export('manager', 'fall', 'applications')).toEqual([]);
+    p.saveApplication('fall', 'applicant', 'hacker', 1, hacker, true, testResume);
+    expect(() =>
+      p.saveApplication(
+        'fall',
+        'applicant',
+        'hacker',
+        1,
+        { ...hacker, major: 'Other (not listed)' },
+        false,
+      ),
+    ).toThrow('another tab');
+    expect(connection.sqlite.pragma('foreign_key_check')).toEqual([]);
+  });
 });

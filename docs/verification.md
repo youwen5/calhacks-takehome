@@ -166,3 +166,15 @@ records, credentials, or judging subsystem were imported.
 - Source reuse and URL-based navigation decisions are documented in architecture,
   reference-review, and AGENTS.md. This UI follow-up does not rebuild the OCI image;
   the previously recorded image predates these layout/navigation changes.
+
+## Attendance page and status gates
+
+The complete browser suite passes all 18 cases, including the full hacker form,
+autosave with edits during a pending save, PDF upload/review, demo verification,
+attendance confirmation, QR check-in, meals, sponsor redemption, and denial of
+unaccepted users at all three event-day page URLs. All 45 unit tests pass; they
+also cover revoking acceptance after check-in and rejecting further meal/code use.
+Type checking reports zero errors/warnings and the production build passes.
+The event pass retains its 320px maximum width, per the user's correction.
+The running development server is available at http://localhost:5173.
+This follow-up does not rebuild or deploy the OCI image.

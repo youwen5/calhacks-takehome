@@ -359,7 +359,7 @@ The September 11 follow-up expands scope to PDF resumes, application analytics,
 a reviewer leaderboard, and a data warehouse. These are implemented features,
 superseding the earlier deferrals of uploads and exports.
 
-Resumes are optional on both application types. A dedicated SQLite table stores
+Resumes are required for hacker submissions and optional for mentors. A dedicated SQLite table stores
 one PDF per application, its display filename, and timestamp. Keeping small files
 in SQLite makes application/file writes atomic and includes files in existing
 backup/restore and volume persistence. There is no S3 dependency or credential
@@ -431,3 +431,19 @@ for the data model, transaction rules, Storke parity, deliberate differences,
 credential-free setup, and walkthrough. Manage events replaces Organizer workspace
 and sits at the bottom of the sidebar. Empty-event deletion is administrator-only;
 archive preserves populated events.
+
+### Full hacker form baseline
+
+The user authorized resetting demo applications for the complete Storke hacker form,
+without preserving old form variants. See [hacker-application.md](hacker-application.md)
+for the explicit reset, typed profile table, searchable reference lists, required
+PDF/acknowledgements, optional essays, and version-checked autosave behavior.
+
+### VPS deployment without cloud services
+
+The latest deployment instruction supersedes the earlier live-mail requirement.
+Compose runs the Nix-built Node monolith with a persistent named SQLite volume;
+PDFs remain database blobs. It explicitly enables email-disabled/demo-verification
+mode. Auth callbacks are omitted so no messages are silently discarded; the UI
+hides resend/reset controls and explains the limitation. Production outbox is
+still rejected. SES remains an optional adapter, not a deployment prerequisite.

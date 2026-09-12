@@ -8,6 +8,13 @@ export const destinations = [
     path: 'applications',
     icon: 'files',
   },
+  {
+    key: 'attendance',
+    label: 'Confirm attendance',
+    scope: 'applicant',
+    path: 'confirm-attendance',
+    icon: 'calendar',
+  },
   { key: 'pass', label: 'Event pass & meals', scope: 'applicant', path: 'check-in', icon: 'qr' },
   { key: 'codes', label: 'Sponsor codes', scope: 'applicant', path: 'codes', icon: 'gift' },
   { key: 'checkin', label: 'Check-in & meals', scope: 'team', path: 'check-in', icon: 'qr' },
@@ -59,4 +66,14 @@ export function canNavigate(destination: Destination, eventId: string, access: E
 }
 export function destinationUrl(destination: Destination, slug: string) {
   return `${destination.scope === 'applicant' ? '/events' : '/organizer'}/${encodeURIComponent(slug)}${destination.path ? '/' + destination.path : ''}`;
+}
+
+// Confirmation unlocks the pass and catalog; redemption still requires staff check-in.
+export function applicantDestinationVisible(
+  key: string,
+  state: { accepted: boolean; attendance: unknown },
+) {
+  if (key === 'attendance') return state.accepted && !state.attendance;
+  if (key === 'pass' || key === 'codes') return state.accepted && !!state.attendance;
+  return true;
 }

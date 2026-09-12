@@ -7,7 +7,8 @@ preserved. No new environment variables, vendor accounts, or cloud keys are requ
 
 1. Sign in as `jordan@example.com` with `CalHacks-demo-2026!`. This seeded
    applicant already has a published acceptance for Cal Hacks 12.0. Open
-   **Event pass & meals**, select that event, and confirm attendance. Optional
+   **Confirm attendance**, select that event, and confirm attendance. Confirmation
+   redirects to **Event pass & meals** and unlocks **Sponsor codes**. Optional
    dietary details are visible to that event's staff.
 2. In another browser profile, sign in as `manager@example.com` (same password).
    Open **Check-in & meals**, select Cal Hacks 12.0, and scan Jordan's pass.
@@ -64,8 +65,8 @@ claim history and preventing deletion from enabling a second claim. This is an
 intentional integrity improvement over Storke's unrestricted deletion.
 
 Admission confirmation is a simple attendance commitment and optional dietary
-text. It does not copy SB Hacks' legal waivers, demographic fields, or emergency
-contact form. No acceptance email, capacity enforcement, or automatic admission
+text. Staff also see dietary restrictions from the submitted hacker application.
+It does not add SB Hacks' legal waivers or emergency contact form. No acceptance email, capacity enforcement, or automatic admission
 reversal is implied. Correcting an admission after check-in does not erase recorded
 attendance, meal usage, or sponsor claims.
 
@@ -101,3 +102,24 @@ volume procedures. Migration 0004 adds tables without rewriting existing records
 See README and deployment documentation for backup-before-migration instructions.
 Sponsor CSVs contain codes and redeemer information; only current event managers
 may download them. Responses are private/no-store and spreadsheet formulas are escaped.
+
+## Applicant page gates
+
+The sidebar section is **Event**. Before confirmation, accepted applicants see
+**Confirm attendance** at `/events/[eventSlug]/confirm-attendance`. Confirmation
+unlocks the event pass and sponsor catalog; the confirmation link then disappears.
+The event picker filters these destinations by eligibility for each event.
+Direct page loads check the latest published acceptance before returning page data:
+unaccepted applicants return to their applications, and unconfirmed applicants go
+to confirmation. Already-confirmed users visiting confirmation go to their pass.
+The pass retains its original 320px maximum width.
+
+Only staff check-in unlocks meal use and sponsor redemption. Those mutations also
+recheck current published acceptance in their transaction, so a revoked acceptance
+blocks further use even when an attendance record exists. Sponsor codes can be
+browsed after confirmation, but cannot be claimed before check-in.
+
+On global pages such as Explore events, attendance/pass/sponsor sidebar links
+appear only when at least one visible event satisfies the destination’s gate.
+The link opens the filtered event picker. On an event page, only that event’s
+status controls visibility; acceptance at another event does not unlock links.

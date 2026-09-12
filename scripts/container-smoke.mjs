@@ -21,15 +21,15 @@ const env = [
   '-e',
   'ORIGIN=https://portal.example.test',
   '-e',
-  'MAIL_MODE=ses',
+  'MAIL_MODE=disabled',
   '-e',
-  'AWS_REGION=us-west-2',
-  '-e',
-  'AWS_SES_FROM=portal@example.test',
+  'DEMO_EMAIL_VERIFICATION=true',
 ];
 const persistedApplicationCheck = `
   const row=d.prepare("SELECT a.name, a.status, h.ambition FROM application a JOIN hacker_answer h ON h.applicationId=a.id WHERE a.id='smoke-application'").get();
   if(row?.name!=='Synthetic Builder'||row.status!=='submitted'||row.ambition!=='Learn together')process.exit(1);
+  const profile=d.prepare("SELECT major FROM hacker_profile WHERE applicationId='smoke-application'").get();
+  if(profile?.major!=='Computer science')process.exit(1);
   const resume=d.prepare("SELECT filename, bytes FROM resume WHERE applicationId='smoke-application'").get();
   if(resume?.filename!=='resume.pdf'||Buffer.from(resume.bytes).toString()!=='%PDF-1.4 container resume %%EOF')process.exit(1);
   const attendance=d.prepare("SELECT dietary,checkedInAt FROM attendance WHERE userId='smoke-user'").get();
@@ -78,12 +78,33 @@ try {
     name,
     'node',
     '-e',
+    `(async()=>{
+      const base='http://127.0.0.1:3000';
+      const post=(path,body,cookie='')=>fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://portal.example.test',Cookie:cookie},body:JSON.stringify(body)});
+      const signup=await post('/api/auth/sign-up/email',{name:'Email-free Demo',email:'email-free@example.test',password:'Synthetic-password-2026!'});
+      if(!signup.ok)throw Error('Email-free registration failed: '+await signup.text());
+      const cookie=signup.headers.getSetCookie().map(c=>c.split(';')[0]).join('; ');
+      const verified=await post('/api/demo/verify-email',{},cookie);
+      if(!verified.ok || !(await verified.json()).verified)throw Error('Demo verification failed');
+      for(const email of ['email-free@example.test','missing@example.test']) {
+        const reset=await post('/api/auth/request-password-reset',{email});
+        if(reset.status!==400)throw Error('Email-free reset must be disabled');
+      }
+      if(!(await (await fetch(base+'/forgot-password')).text()).includes('Password reset is unavailable'))throw Error('Missing email-free notice');
+    })().catch(e=>{console.error(e);process.exit(1)})`,
+  ]);
+  run([
+    'exec',
+    name,
+    'node',
+    '-e',
     `const {DatabaseSync}=require('node:sqlite');const d=new DatabaseSync('/data/portal.db');d.exec(
       "BEGIN; INSERT INTO user(id,name,email,emailVerified,createdAt,updatedAt) VALUES('smoke-user','Synthetic Builder','smoke@example.test',1,1,1);"+
       "INSERT INTO event(id,slug,name,description,venue,timezone,opensAt,closesAt,startsAt,endsAt,status) VALUES('smoke-event','smoke-event','Synthetic event','Container persistence test','Demo venue','UTC',1,2,3,4,'published');"+
       "INSERT INTO offered_type(eventId,type) VALUES('smoke-event','hacker');"+
       "INSERT INTO application(id,eventId,userId,type,status,name,formVersion,rubricVersion,updatedAt,submittedAt) VALUES('smoke-application','smoke-event','smoke-user','hacker','submitted','Synthetic Builder',1,1,1,1);"+
       "INSERT INTO hacker_answer(applicationId,interests,experience,ambition) VALUES('smoke-application','Community software','A test project','Learn together');"+
+      "INSERT INTO hacker_profile(applicationId,major) VALUES('smoke-application','Computer science');"+
       "INSERT INTO attendance(eventId,userId,confirmedAt,dietary,checkedInAt,checkerId) VALUES('smoke-event','smoke-user',1,'Vegetarian',2,'smoke-user');"+
       "INSERT INTO meal_ticket(eventId,userId,meal,usedAt,checkerId,version) VALUES('smoke-event','smoke-user','lunch',3,'smoke-user',1);"+
       "INSERT INTO sponsor(id,eventId,name,createdAt) VALUES('smoke-sponsor','smoke-event','Synthetic sponsor',1);"+

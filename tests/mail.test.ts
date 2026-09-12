@@ -44,6 +44,19 @@ describe('email boundaries', () => {
     );
     expect(() => mailConfig({ NODE_ENV: 'production', MAIL_MODE: 'ses' })).toThrow('AWS_REGION');
   });
+  it('allows explicit email-free production demos without silently dropping messages', async () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('MAIL_MODE', 'disabled');
+    vi.stubEnv('DEMO_EMAIL_VERIFICATION', 'true');
+    expect(mailConfig().mode).toBe('disabled');
+    await expect(
+      sendAuthEmail('person@example.com', 'https://example.test/reset', 'reset'),
+    ).rejects.toThrow('disabled');
+    expect(mocks.send).not.toHaveBeenCalled();
+    expect(() => mailConfig({ NODE_ENV: 'production', MAIL_MODE: 'disabled' })).toThrow(
+      'DEMO_EMAIL_VERIFICATION=true',
+    );
+  });
   it('uses the live provider and propagates failures without making an outbox', async () => {
     vi.stubEnv('MAIL_MODE', 'ses');
     vi.stubEnv('AWS_REGION', 'us-west-2');

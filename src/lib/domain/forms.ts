@@ -1,3 +1,4 @@
+import { hackerProfileSchema, validateHackerSubmission } from './hacker';
 import { z } from 'zod';
 export const applicationTypes = ['hacker', 'mentor'] as const;
 export type ApplicationType = (typeof applicationTypes)[number];
@@ -17,7 +18,12 @@ export const commonSchema = z.object({
   introduction: essay,
   link,
 });
-const hacker = commonSchema.extend({ interests: essay, experience: essay, ambition: essay });
+const hacker = commonSchema.extend({
+  ...hackerProfileSchema.shape,
+  interests: z.string().trim().max(500).default(''),
+  experience: z.string().trim().max(500).default(''),
+  ambition: z.string().trim().max(500).default(''),
+});
 const mentor = commonSchema.extend({ expertise: essay, mentoring: essay, availability: essay });
 export const forms = {
   hacker: {
@@ -26,17 +32,17 @@ export const forms = {
     fields: [
       {
         key: 'interests',
-        label: 'What are you curious about?',
-        hint: 'Tell us which ideas or technologies you want to explore.',
+        label: 'Why do you want to attend Cal Hacks?',
+        hint: 'Tell us what excites you about the event.',
       },
       {
         key: 'experience',
-        label: 'Tell us about something you tried',
-        hint: 'A project, a class, or an experiment. Beginners are welcome.',
+        label: 'Tell us about a technical challenge you’ve overcome',
+        hint: 'Describe a challenge and how you solved it.',
       },
       {
         key: 'ambition',
-        label: 'What would you like to build or learn?',
+        label: 'What do you hope to build or learn?',
         hint: 'What would make this weekend meaningful for you?',
       },
     ],
@@ -67,7 +73,7 @@ export const forms = {
     schema: mentor,
   },
 } as const;
-// Add future definitions under a new version; never replace a published version.
+// Greenfield baseline reset authorized by the user; no legacy application records remain.
 export const formVersions = { 1: forms } as const;
 export function formDefinition(type: ApplicationType, version: number) {
   if (version !== 1) throw new Error('Unsupported form version');
@@ -79,11 +85,15 @@ export function parseAnswers(
   input: unknown,
   submit: boolean,
 ) {
-  const result = formDefinition(type, version).schema.parse(input);
+  formDefinition(type, version);
+  const result = type === 'hacker' ? hacker.parse(input) : mentor.parse(input);
   if (submit) {
-    for (const [key, value] of Object.entries(result)) {
-      if (key !== 'link' && value.length < 2) throw new Error(`Please complete ${key}.`);
-    }
+    if (result.name.length < 2) throw new Error('Please complete your name.');
+    if ('phoneNumber' in result) validateHackerSubmission(result);
+    else
+      for (const [key, value] of Object.entries(result)) {
+        if (key !== 'link' && value.length < 2) throw new Error(`Please complete ${key}.`);
+      }
   }
   return result;
 }
